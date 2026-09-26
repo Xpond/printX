@@ -51,6 +51,5 @@ def apply_theme(app, dark=None):
         QListView#files::item {{ padding: 6px; border: 0; border-radius: 6px; }}
         QProgressBar {{ border: 1px solid {line}; background: {surface}; min-height: 12px; text-align: center; }}
         QProgressBar::chunk {{ background: {magenta}; }}
-        QCheckBox, QRadioButton {{ spacing: 10px; min-height: 30px; }}
-        QToolButton {{ color: {muted}; border: 0; padding: 4px 0; }}
+        QCheckBox, QRadioButton {{ spacing: 10px; min-height: 22px; }}
     ''')

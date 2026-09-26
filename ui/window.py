@@ -30,7 +30,8 @@ class Window(QMainWindow):
         nav = QHBoxLayout()
         self.back = button(T.BACK, self.go_back)
         nav.addWidget(self.back)
-        nav.addWidget(label(T.APP, 'brand'), 1)
+        self.title = label(T.APP, 'brand')
+        nav.addWidget(self.title, 1)
         self.settings_button = button(T.SETTINGS, lambda: self.show_screen(self.preferences))
         nav.addWidget(self.settings_button)
         layout.addLayout(nav)
@@ -53,6 +54,7 @@ class Window(QMainWindow):
         if self.make.jobs.busy:
             return
         self.stack.setCurrentWidget(screen)
+        self.title.setText(getattr(screen, 'title', T.APP))
         self.back.setVisible(screen != self.home)
         self.settings_button.setVisible(screen != self.preferences)
         if screen == self.make:

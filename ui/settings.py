@@ -35,10 +35,10 @@ class Settings(QWidget):
         super().__init__()
         self.settings = settings
         units, paper = region_defaults()
+        self.title = T.SETTINGS  # Shown in the window header.
         layout = QVBoxLayout(self)
-        layout.setSpacing(18)
-        layout.addWidget(label(T.SETTINGS, 'title'))
-        layout.addWidget(label(T.SETTINGS_DESCRIPTION, muted=True))
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(10)
         self.next = QRadioButton(T.NEXT_ORIGINAL)
         self.fixed = QRadioButton(T.FIXED_FOLDER)
         self.next.setChecked(not settings.value('output_folder', ''))
@@ -53,7 +53,7 @@ class Settings(QWidget):
         folder_row.addWidget(button(T.CHOOSE_FOLDER, self.choose_folder))
         layout.addLayout(folder_row)
         form = QFormLayout()
-        form.setSpacing(18)
+        form.setSpacing(10)
         form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
         self.units = combo(T.UNIT_OPTIONS, settings.value('units', units))
         self.paper = combo(T.PAPERS[:2], settings.value('paper', paper))

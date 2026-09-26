@@ -1,7 +1,7 @@
 from pathlib import Path
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import QFormLayout, QHBoxLayout, QInputDialog, QLabel, QLineEdit, QToolButton, QWidget
+from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QInputDialog, QLabel, QLineEdit, QWidget
 from core.files import pdf_name
 from ui import text as T
 from ui.jobs import Jobs
@@ -9,46 +9,39 @@ from ui.settings import combo, region_defaults
 from ui.tool_screen import ToolScreen
 
 
-def row(*widgets):
-    """Controls at their natural size, left-aligned, in one form row."""
-    layout = QHBoxLayout()
-    layout.setContentsMargins(0, 0, 0, 0)
-    layout.setSpacing(12)
-    for widget in widgets:
-        layout.addWidget(widget)
-    layout.addStretch(1)
-    return layout
-
-
 class MakePdf(ToolScreen):
     def __init__(self, settings):
-        super().__init__(T.MAKE_TITLE, T.MAKE_DESCRIPTION)
+        super().__init__(T.MAKE_TITLE)
         self.settings = settings
         self.jobs = Jobs(self)
         self.jobs.event.connect(self.on_event)
         self.model.changed.connect(self.update_count)
-        form = QFormLayout()
         self.mode = combo([(T.COMBINED, True), (T.SEPARATE, False)],
                           settings.value('make/combined', True, type=bool))
         self.paper = combo(T.PAPERS, settings.value('make/paper', settings.value('paper', region_defaults()[1])))
         self.paper.setToolTip(T.PDF_SIZE_NOTE)
         self.name = QLineEdit()
         self.name.setMaxLength(120)
-        self.name.setMinimumWidth(360)
+        self.name.setMinimumWidth(240)
+        self.name.setMaximumWidth(480)
         self.name.setAccessibleName(T.NAME)
+        self.name_label = QLabel(T.NAME)
         self.name_box = QWidget()
-        self.name_box.setLayout(row(QLabel(T.NAME), self.name, QLabel(T.EXTENSION)))
-        self.more = QToolButton()
-        self.more.setText(T.MORE)
-        self.more.setCheckable(True)
+        name_row = QHBoxLayout(self.name_box)
+        name_row.setContentsMargins(0, 0, 0, 0)
+        name_row.setSpacing(4)
+        name_row.addWidget(self.name)
+        name_row.addWidget(QLabel(T.EXTENSION))
         self.margin = combo(T.MARGINS, settings.value('make/margin', 'small'))
-        self.advanced = QWidget()
-        self.advanced.setLayout(row(QLabel(T.MARGIN), self.margin))
-        self.advanced.hide()
-        form.addRow(T.OUTPUT, row(self.mode, self.name_box))
-        form.addRow(T.IMAGE_SIZE, row(self.paper, self.more, self.advanced))
-        self.options_layout.addLayout(form)
-        self.more.toggled.connect(self.advanced.setVisible)
+        options = QGridLayout()
+        options.setHorizontalSpacing(12)
+        options.setColumnStretch(3, 1)
+        for row, fields in enumerate([(QLabel(T.OUTPUT), self.mode, self.name_label, self.name_box),
+                                      (QLabel(T.IMAGE_SIZE), self.paper, QLabel(T.MARGIN), self.margin)]):
+            for column, widget in enumerate(fields):
+                options.addWidget(widget, row, column)
+        options.setAlignment(self.margin, Qt.AlignmentFlag.AlignLeft)  # Natural width, not the column's.
+        self.options_layout.addLayout(options)
         self.paper.currentIndexChanged.connect(lambda: self.margin.setEnabled(self.paper.currentData() != 'image'))
         self.margin.setEnabled(self.paper.currentData() != 'image')
         self.mode.currentIndexChanged.connect(self.update_hint)
@@ -70,6 +63,7 @@ class MakePdf(ToolScreen):
             self.name.setCursorPosition(0)
 
     def update_hint(self):
+        self.name_label.setVisible(bool(self.mode.currentData()))
         self.name_box.setVisible(bool(self.mode.currentData()))
         folder = self.settings.value('output_folder', '')
         self.output_hint.setText(T.SAVED_FIXED.format(folder=folder) if folder else
@@ -105,19 +99,19 @@ class MakePdf(ToolScreen):
         self.cancel.setEnabled(True)
         self.cancel.setText(T.CANCEL)
         self.cancel.show()
-        self.status.setText(T.RUNNING)
+        self.set_status(T.RUNNING)
         self.jobs.start(list(self.model.paths), options)
 
     def cancel_job(self):
         self.cancel.setEnabled(False)
         self.cancel.setText(T.CANCELLING)
-        self.status.setText(T.CANCELLING)
+        self.set_status(T.CANCELLING)
         self.jobs.cancel()
 
     def on_event(self, kind, data):
         if kind == 'progress':
             self.progress.setValue(data['index'])
-            self.status.setText(T.FINISHING if data['index'] == data['total'] else T.PROGRESS.format(
+            self.set_status(T.FINISHING if data['index'] == data['total'] else T.PROGRESS.format(
                 name=Path(data['path']).name, index=data['index'] + 1, total=data['total']))
         elif kind == 'skipped':
             self.message(T.SKIPPED.format(name=Path(data['path']).name, reason=T.ERRORS[data['code']]))
@@ -134,11 +128,11 @@ class MakePdf(ToolScreen):
             self.progress.hide()
             self.update_count()
             if kind == 'done':
-                self.status.setText(T.SUCCESS_ONE if len(data) == 1 else T.SUCCESS.format(count=len(data)))
+                self.set_status(T.SUCCESS_ONE if len(data) == 1 else T.SUCCESS.format(count=len(data)))
             elif kind == 'cancelled':
-                self.status.setText(T.CANCELLED)
+                self.set_status(T.CANCELLED)
             else:
-                self.status.setText(T.ERRORS[data])
+                self.set_status(T.ERRORS[data])
             self.results.setVisible(self.outputs.count() > 0)
 
     def reset(self):
@@ -148,7 +142,7 @@ class MakePdf(ToolScreen):
         self.results.hide()
         self.messages.hide()
         self.messages.clear()
-        self.status.clear()
+        self.set_status('')
         self.outputs.clear()
 
     def open_output(self, folder):
