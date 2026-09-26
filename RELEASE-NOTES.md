@@ -1,4 +1,4 @@
-**New in 0.1.1:** the Make PDF file list keeps at least three rows visible on laptop screens, and the drop area shrinks once files are added. Remove several files at once with **Select all** and **Remove selected**, or select files and press Delete.
+**New in 0.1.2:** Make PDF shows your files as a grid of large thumbnails with readable names. Drop files onto the grid or click it to choose them. Name the combined PDF in **File name** before saving. Buttons and options are smaller and neatly aligned.
 
 Phase 1: Make PDF from images and existing PDFs, with ordering, paper sizes, password prompts, background processing, and cancellation.
 
