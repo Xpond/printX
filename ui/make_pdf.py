@@ -1,11 +1,23 @@
 from pathlib import Path
 from PySide6.QtCore import QUrl
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import QFormLayout, QInputDialog, QLineEdit, QToolButton, QWidget
+from PySide6.QtWidgets import QFormLayout, QHBoxLayout, QInputDialog, QLabel, QLineEdit, QToolButton, QWidget
+from core.files import pdf_name
 from ui import text as T
 from ui.jobs import Jobs
 from ui.settings import combo, region_defaults
 from ui.tool_screen import ToolScreen
+
+
+def row(*widgets):
+    """Controls at their natural size, left-aligned, in one form row."""
+    layout = QHBoxLayout()
+    layout.setContentsMargins(0, 0, 0, 0)
+    layout.setSpacing(12)
+    for widget in widgets:
+        layout.addWidget(widget)
+    layout.addStretch(1)
+    return layout
 
 
 class MakePdf(ToolScreen):
@@ -20,23 +32,25 @@ class MakePdf(ToolScreen):
                           settings.value('make/combined', True, type=bool))
         self.paper = combo(T.PAPERS, settings.value('make/paper', settings.value('paper', region_defaults()[1])))
         self.paper.setToolTip(T.PDF_SIZE_NOTE)
-        form.addRow(T.OUTPUT, self.mode)
-        form.addRow(T.IMAGE_SIZE, self.paper)
-        self.options_layout.addLayout(form)
+        self.name = QLineEdit()
+        self.name.setMaxLength(120)
+        self.name.setMinimumWidth(360)
+        self.name.setAccessibleName(T.NAME)
+        self.name_box = QWidget()
+        self.name_box.setLayout(row(QLabel(T.NAME), self.name, QLabel(T.EXTENSION)))
         self.more = QToolButton()
         self.more.setText(T.MORE)
         self.more.setCheckable(True)
-        self.advanced = QWidget()
-        more_form = QFormLayout(self.advanced)
-        more_form.setContentsMargins(0, 0, 0, 0)
         self.margin = combo(T.MARGINS, settings.value('make/margin', 'small'))
-        more_form.addRow(T.MARGIN, self.margin)
+        self.advanced = QWidget()
+        self.advanced.setLayout(row(QLabel(T.MARGIN), self.margin))
         self.advanced.hide()
+        form.addRow(T.OUTPUT, row(self.mode, self.name_box))
+        form.addRow(T.IMAGE_SIZE, row(self.paper, self.more, self.advanced))
+        self.options_layout.addLayout(form)
         self.more.toggled.connect(self.advanced.setVisible)
         self.paper.currentIndexChanged.connect(lambda: self.margin.setEnabled(self.paper.currentData() != 'image'))
         self.margin.setEnabled(self.paper.currentData() != 'image')
-        self.options_layout.addWidget(self.more)
-        self.options_layout.addWidget(self.advanced)
         self.mode.currentIndexChanged.connect(self.update_hint)
         self.run.clicked.connect(self.start)
         self.cancel.clicked.connect(self.cancel_job)
@@ -51,8 +65,12 @@ class MakePdf(ToolScreen):
         self.count.setText(T.FILE_COUNT_ONE if count == 1 else T.FILE_COUNT.format(count=count) if count else T.EMPTY_LIST)
         self.run.setText(T.RUN_ONE if count == 1 else T.RUN.format(count=count) if count else T.RUN_EMPTY)
         self.run.setEnabled(bool(count) and not self.jobs.busy)
+        if not self.name.isModified() or not self.name.text().strip():
+            self.name.setText(pdf_name(self.model.paths) if count else '')  # Follows the first file until typed.
+            self.name.setCursorPosition(0)
 
     def update_hint(self):
+        self.name_box.setVisible(bool(self.mode.currentData()))
         folder = self.settings.value('output_folder', '')
         self.output_hint.setText(T.SAVED_FIXED.format(folder=folder) if folder else
                                 T.SAVED_NEXT if self.mode.currentData() else T.SAVED_EACH)
@@ -70,7 +88,8 @@ class MakePdf(ToolScreen):
         if not self.model.paths or self.jobs.busy:
             return
         options = {'combined': self.mode.currentData(), 'paper': self.paper.currentData(),
-                   'margin': self.margin.currentData(), 'output_folder': self.settings.value('output_folder', '')}
+                   'margin': self.margin.currentData(), 'output_folder': self.settings.value('output_folder', ''),
+                   'name': self.name.text()}
         for key in ('combined', 'paper', 'margin'):
             self.settings.setValue('make/' + key, options[key])
         self.messages.clear()
@@ -125,6 +144,7 @@ class MakePdf(ToolScreen):
     def reset(self):
         self.model.replace([])
         self.model.cache.clear()
+        self.name.setText('')
         self.results.hide()
         self.messages.hide()
         self.messages.clear()

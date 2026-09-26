@@ -51,6 +51,13 @@ def test_separate_unique_names_and_fixed_output(photo, pdf, tmp_path):
     assert not list(folder.glob('.printshop-*'))
 
 
+def test_typed_combined_name_is_made_safe(photo, pdf):
+    output, = run([photo, pdf], name=' Client: Smith.pdf ')
+    assert Path(output).name == 'Client Smith.pdf'
+    output, = run([photo, pdf], name=' ?* ')
+    assert Path(output).name == f'{photo.stem}_combined.pdf'
+
+
 def test_transparent_palette_multiframe_and_exif(tmp_path):
     rgba = Image.new('RGBA', (80, 40), (255, 0, 0, 0))
     png = tmp_path / 'transparent.png'

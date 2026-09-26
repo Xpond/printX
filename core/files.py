@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 
 IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.tif', '.tiff', '.bmp', '.webp', '.heic', '.heif'}
@@ -22,6 +23,14 @@ def check_cancel(cancel):
 
 def output_directory(path, options):
     return Path(options.get('output_folder') or Path(path).parent)
+
+
+def pdf_name(paths, typed=''):
+    """Name for the combined PDF: the typed name made safe for Windows, else the default."""
+    name = re.sub(r'[<>:"/\\|?*\x00-\x1f]', '', typed).strip().rstrip('. ')
+    if name.lower().endswith('.pdf'):
+        name = name[:-4].rstrip('. ')
+    return name or f"{Path(paths[0]).stem}_{'combined' if len(paths) > 1 else 'made'}"
 
 
 def stage_directory(directory, token):

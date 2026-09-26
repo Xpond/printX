@@ -1,6 +1,8 @@
 from io import BytesIO
 from pathlib import Path
 
+SIZE = 256  # Sharp in 128 px tiles up to 200% display scaling.
+
 
 def thumbnail(path):
     """Run inside the thumbnail process, never in a Qt thread."""
@@ -11,15 +13,15 @@ def thumbnail(path):
                 if doc.needs_pass:
                     return b'', 'locked', 0
                 page = doc[0]
-                scale = 112 / max(page.rect.width, page.rect.height)
+                scale = SIZE / max(page.rect.width, page.rect.height)
                 pixmap = page.get_pixmap(matrix=pymupdf.Matrix(scale, scale), alpha=False)
                 return pixmap.tobytes('png'), 'pages', doc.page_count
         from PIL import ImageOps
         from core.images import pillow_open
         with pillow_open(path) as image:
             size = image.size
-            image.draft('RGB', (112, 112))
-            image.thumbnail((112, 112))
+            image.draft('RGB', (SIZE, SIZE))
+            image.thumbnail((SIZE, SIZE))
             image = ImageOps.exif_transpose(image).convert('RGBA')
             data = BytesIO()
             image.save(data, 'PNG')

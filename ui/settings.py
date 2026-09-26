@@ -1,5 +1,6 @@
-from PySide6.QtCore import QLocale, Signal
-from PySide6.QtWidgets import QComboBox, QFileDialog, QFormLayout, QLineEdit, QRadioButton, QVBoxLayout, QWidget
+from PySide6.QtCore import QLocale, Qt, Signal
+from PySide6.QtWidgets import (QComboBox, QFileDialog, QFormLayout, QHBoxLayout, QLineEdit, QRadioButton,
+                               QVBoxLayout, QWidget)
 from ui import text as T
 from ui.widgets import button, label
 
@@ -47,10 +48,13 @@ class Settings(QWidget):
         layout.addWidget(self.fixed)
         self.folder = QLineEdit(settings.value('output_folder', ''))
         self.folder.setPlaceholderText(T.FOLDER_HINT)
-        layout.addWidget(self.folder)
-        layout.addWidget(button(T.CHOOSE_FOLDER, self.choose_folder))
+        folder_row = QHBoxLayout()
+        folder_row.addWidget(self.folder, 1)
+        folder_row.addWidget(button(T.CHOOSE_FOLDER, self.choose_folder))
+        layout.addLayout(folder_row)
         form = QFormLayout()
         form.setSpacing(18)
+        form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
         self.units = combo(T.UNIT_OPTIONS, settings.value('units', units))
         self.paper = combo(T.PAPERS[:2], settings.value('paper', paper))
         form.addRow(T.UNITS, self.units)
@@ -61,7 +65,7 @@ class Settings(QWidget):
         self.message = label('')
         layout.addWidget(self.message)
         layout.addStretch()
-        layout.addWidget(button(T.SAVE_SETTINGS, self.save, primary=True))
+        layout.addWidget(button(T.SAVE_SETTINGS, self.save, primary=True), alignment=Qt.AlignmentFlag.AlignRight)
 
     def choose_folder(self):
         folder = QFileDialog.getExistingDirectory(self, T.CHOOSE_FOLDER, self.folder.text())
