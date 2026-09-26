@@ -2,8 +2,8 @@ import time
 from pathlib import Path
 from PySide6.QtCore import QModelIndex, QSettings, QTimer, Qt
 from PySide6.QtGui import QFontMetrics
-from PySide6.QtWidgets import QApplication
-from ui.file_list import TILE, two_lines
+from PySide6.QtWidgets import QApplication, QFileDialog
+from ui.tiles import TILE, two_lines
 from ui.window import Window
 
 
@@ -65,7 +65,7 @@ def test_200_files_added_without_reading_them(qtbot, tmp_path):
     assert window.make.model.thumbnails.process is None
 
 
-def test_select_all_remove_and_roomy_list(qtbot, tmp_path):
+def test_grid_select_all_remove_and_click_to_add(qtbot, tmp_path, monkeypatch):
     window = Window(QSettings(str(tmp_path / 'settings.ini'), QSettings.Format.IniFormat))
     qtbot.addWidget(window)
     window.resize(1280, 650)
@@ -77,12 +77,15 @@ def test_select_all_remove_and_roomy_list(qtbot, tmp_path):
     qtbot.wait(50)
     first, second = (screen.list.visualRect(screen.model.index(i)) for i in range(2))
     assert first.top() == second.top() and screen.list.height() >= TILE.height()  # Tiles wrap in a grid.
-    assert screen.drop.height() < 100
     screen.select_all.click()
     assert screen.remove_button.isEnabled()
     screen.remove_button.click()
     assert screen.model.paths == []
-    assert not screen.remove_button.isEnabled() and screen.drop.minimumHeight() == 126
+    assert not screen.remove_button.isEnabled()
+    browsed = []
+    monkeypatch.setattr(QFileDialog, 'getOpenFileNames', lambda *args: browsed.append(1) or ([], ''))
+    qtbot.mouseClick(screen.list.viewport(), Qt.MouseButton.LeftButton)
+    assert browsed  # The empty grid replaces the drop zone: clicking it opens the file picker.
     screen.add_files([str(tmp_path / f'{i}.jpg') for i in range(3)])
     screen.list.setCurrentIndex(screen.model.index(1))
     qtbot.keyClick(screen.list, Qt.Key.Key_Delete)

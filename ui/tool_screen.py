@@ -1,26 +1,22 @@
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QComboBox, QFileDialog, QHBoxLayout, QProgressBar,
                                QTextEdit, QVBoxLayout, QWidget)
 from ui import text as T
 from ui.file_list import FileList, FileModel
-from ui.widgets import DropZone, button, label
+from ui.widgets import button, label
 
 
 class ToolScreen(QWidget):
-    def __init__(self, title, description):
+    def __init__(self, title):
         super().__init__()
+        self.title = title  # Shown in the window header.
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(10)
-        self.layout.addWidget(label(title, 'title'))
-        self.layout.addWidget(label(description, muted=True))
         self.inputs = QWidget()
         inputs = QVBoxLayout(self.inputs)
         inputs.setContentsMargins(0, 0, 0, 0)
         inputs.setSpacing(10)
-        self.drop = DropZone()
-        self.drop.browse.connect(self.browse)
-        self.drop.files.connect(self.add_files)
-        inputs.addWidget(self.drop)
         toolbar = QHBoxLayout()
         self.count = label(T.EMPTY_LIST, muted=True)
         toolbar.addWidget(self.count, 1)
@@ -28,6 +24,7 @@ class ToolScreen(QWidget):
         self.model = FileModel(self)
         self.list = FileList(self.model)
         self.list.files.connect(self.add_files)
+        self.list.browse.connect(self.browse)
         self.list.remove_requested.connect(self.remove)
         toolbar.addWidget(button(T.SORT, self.model.sort))
         self.select_all = button(T.SELECT_ALL, self.list.selectAll)
@@ -47,17 +44,18 @@ class ToolScreen(QWidget):
         self.messages.setMaximumHeight(85)
         self.messages.hide()
         self.layout.addWidget(self.messages)
-        self.status = label('')
-        self.layout.addWidget(self.status)
         self.progress = QProgressBar()
         self.progress.setTextVisible(False)
         self.progress.hide()
         self.layout.addWidget(self.progress)
         controls = QHBoxLayout()
+        self.status = label('')
+        self.status.hide()
         self.output_hint = label(T.SAVED_NEXT, muted=True)
         self.run = button(T.RUN_EMPTY, primary=True)
         self.cancel = button(T.CANCEL)
         self.cancel.hide()
+        controls.addWidget(self.status, 1)
         controls.addWidget(self.output_hint, 1)
         controls.addWidget(self.run)
         controls.addWidget(self.cancel)
@@ -91,9 +89,15 @@ class ToolScreen(QWidget):
 
     def update_selection(self):
         count = len(self.model.paths)
-        self.drop.set_compact(bool(count))
+        self.list.viewport().setCursor(Qt.CursorShape.ArrowCursor if count else Qt.CursorShape.PointingHandCursor)
         self.select_all.setEnabled(bool(count))
         self.remove_button.setEnabled(self.list.selectionModel().hasSelection())
+
+    def set_status(self, text):
+        """Job progress and results take the place of the save hint."""
+        self.status.setText(text)
+        self.status.setVisible(bool(text))
+        self.output_hint.setVisible(not text)
 
     def message(self, value):
         self.messages.show()
