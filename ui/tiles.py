@@ -12,10 +12,10 @@ def square(data=b''):
     ratio = QApplication.instance().devicePixelRatio()
     side = round(ICON * ratio)
     pixmap = QPixmap(side, side)
-    pixmap.fill(QColor(128, 128, 128, 40))
     image = QPixmap()
-    if data and image.loadFromData(data):
-        pixmap.fill(Qt.GlobalColor.transparent)
+    loaded = bool(data) and image.loadFromData(data)
+    pixmap.fill(Qt.GlobalColor.transparent if loaded else QColor(128, 128, 128, 40))
+    if loaded:
         image = image.scaled(side, side, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         x, y = (side - image.width()) // 2, (side - image.height()) // 2
         painter = QPainter(pixmap)

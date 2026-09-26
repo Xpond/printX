@@ -39,7 +39,7 @@ def apply_theme(app, dark=None):
         QPushButton:hover {{ border-color: {ink}; }}
         QPushButton:focus, QComboBox:focus {{ border: 2px solid {magenta}; }}
         QPushButton:disabled {{ color: {muted}; background: {paper}; }}
-        QPushButton#primary {{ background: {magenta}; color: {'#202226' if dark else 'white'}; border: 0; font-weight: bold; padding: 7px 22px; min-height: 20px; }}
+        QPushButton#primary {{ background: {magenta}; color: {'#202226' if dark else 'white'}; border: 0; font-weight: bold; padding: 6px 22px; min-height: 20px; }}
         QPushButton#primary:disabled {{ background: {line}; color: {muted}; }}
         QFrame#tile {{ background: {surface}; border: 1px solid {line}; }}
         QFrame#tile[active="true"] {{ border-left: 4px solid {magenta}; }}
