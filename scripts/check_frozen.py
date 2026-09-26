@@ -10,7 +10,8 @@ import time
 executable = Path(sys.argv[1]).resolve()
 destination = Path(sys.argv[2]).resolve()
 destination.mkdir(parents=True, exist_ok=True)
-environment = dict(os.environ, QT_QPA_PLATFORM='offscreen', QT_QPA_PLATFORMTHEME='generic')
+environment = dict(os.environ, QT_QPA_PLATFORM='windows' if os.name == 'nt' else 'offscreen',
+                   QT_QPA_PLATFORMTHEME='generic')
 started = time.monotonic()
 process = subprocess.Popen([str(executable), '--smoke-test', str(destination)],
                            cwd=tempfile.gettempdir(), env=environment)

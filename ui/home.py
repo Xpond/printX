@@ -1,6 +1,7 @@
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QVBoxLayout, QWidget
 from ui import text as T
+from ui.icons import ToolIcon
 from ui.widgets import button, label
 
 
@@ -18,7 +19,6 @@ class Home(QWidget):
         grid.setSpacing(14)
         for row in range(4):
             grid.setRowStretch(row, 1)
-        icons = ['↗', '⊕', '↓', '✂', '↻', '▧', '◇']
         for i, (key, title, description, category) in enumerate(T.TOOLS):
             tile = QFrame()
             tile.setObjectName('tile')
@@ -28,10 +28,7 @@ class Home(QWidget):
             box = QVBoxLayout(tile)
             box.setContentsMargins(18, 12, 18, 12)
             row = QHBoxLayout()
-            icon = label(icons[i])
-            icon.setProperty('accent', category)
-            icon.setFixedWidth(28)
-            row.addWidget(icon)
+            row.addWidget(ToolIcon(key, category))
             pick = button(title, lambda checked=False, value=key: self.selected.emit(value))
             pick.setEnabled(key == 'make')
             if key != 'make':

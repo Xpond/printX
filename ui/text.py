@@ -8,8 +8,8 @@ TOOLS = [
     ('compress', 'Compress PDF', 'Make a PDF smaller to send.', 'pdf'),
     ('split', 'Split PDF', 'Save just the pages you need.', 'pdf'),
     ('organize', 'Organize pages', 'Reorder, rotate or remove pages.', 'pdf'),
-    ('render', 'PDF → Images', 'Save PDF pages as JPG or PNG.', 'pdf'),
-    ('vector', 'Logo → Vector', 'Make a logo sharp at any size.', 'image'),
+    ('render', 'PDF to images', 'Save PDF pages as JPG or PNG.', 'pdf'),
+    ('vector', 'Logo to vector', 'Make a logo sharp at any size.', 'image'),
 ]
 LATER = 'Coming in a later phase'
 OFFLINE = 'Your files stay on this computer.'
