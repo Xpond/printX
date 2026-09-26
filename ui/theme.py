@@ -35,21 +35,22 @@ def apply_theme(app, dark=None):
         QLabel#title {{ font-size: 32px; font-weight: bold; }}
         QLabel#brand {{ font-weight: bold; font-size: 20px; }}
         QLabel[muted="true"] {{ color: {muted}; }}
-        QPushButton {{ background: {surface}; border: 1px solid {line}; padding: 10px 16px; min-height: 22px; }}
+        QPushButton {{ background: {surface}; border: 1px solid {line}; padding: 5px 14px; min-height: 20px; }}
         QPushButton:hover {{ border-color: {ink}; }}
         QPushButton:focus, QComboBox:focus {{ border: 2px solid {magenta}; }}
         QPushButton:disabled {{ color: {muted}; background: {paper}; }}
-        QPushButton#primary {{ background: {magenta}; color: {'#202226' if dark else 'white'}; border: 0; font-weight: bold; font-size: 20px; min-height: 30px; }}
+        QPushButton#primary {{ background: {magenta}; color: {'#202226' if dark else 'white'}; border: 0; font-weight: bold; padding: 7px 22px; min-height: 20px; }}
         QPushButton#primary:disabled {{ background: {line}; color: {muted}; }}
         QFrame#tile {{ background: {surface}; border: 1px solid {line}; }}
         QFrame#tile[active="true"] {{ border-left: 4px solid {magenta}; }}
-        QComboBox, QLineEdit {{ background: {surface}; border: 1px solid {line}; padding: 8px; min-height: 24px; }}
+        QComboBox, QLineEdit {{ background: {surface}; border: 1px solid {line}; padding: 4px 8px; min-height: 22px; }}
         QComboBox QAbstractItemView {{ background: {surface}; color: {ink}; selection-background-color: {magenta}; }}
         QListView {{ background: {surface}; border: 1px solid {line}; outline: 0; }}
         QListView::item {{ padding: 8px; border-bottom: 1px solid {line}; }}
         QListView::item:selected {{ background: {line}; color: {ink}; }}
+        QListView#files::item {{ padding: 6px; border: 0; border-radius: 6px; }}
         QProgressBar {{ border: 1px solid {line}; background: {surface}; min-height: 12px; text-align: center; }}
         QProgressBar::chunk {{ background: {magenta}; }}
         QCheckBox, QRadioButton {{ spacing: 10px; min-height: 30px; }}
-        QToolButton {{ color: {muted}; border: 0; padding: 8px 0; }}
+        QToolButton {{ color: {muted}; border: 0; padding: 4px 0; }}
     ''')

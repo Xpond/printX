@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 
 from core.files import (INPUT_EXTENSIONS, Cancelled, JobError, check_cancel, error_code,
-                        output_directory, publish, stage_directory)
+                        output_directory, pdf_name, publish, stage_directory)
 
 
 def open_pdf(path, progress, cancel):
@@ -37,7 +37,7 @@ def make_pdf(paths, options, progress, cancel):
     outputs, stages = [], set()
     result = pymupdf.open()
 
-    def save(document, source, suffix):
+    def save(document, source, name):
         directory = output_directory(source, options)
         stage = stage_directory(directory, token)
         stage.mkdir(parents=True, exist_ok=True)
@@ -46,7 +46,7 @@ def make_pdf(paths, options, progress, cancel):
         check_cancel(cancel)
         document.save(temp, garbage=3, deflate=True)
         check_cancel(cancel)
-        output = publish(temp, directory / f'{Path(source).stem}_{suffix}.pdf')
+        output = publish(temp, directory / f'{name}.pdf')
         outputs.append(output)
         progress('output', {'path': output})
 
@@ -69,7 +69,7 @@ def make_pdf(paths, options, progress, cancel):
                     else:
                         with pymupdf.open() as single:
                             single.insert_pdf(source)
-                            save(single, path, 'made')
+                            save(single, path, f'{path.stem}_made')
             except Cancelled:
                 raise
             except Exception as error:
@@ -77,7 +77,7 @@ def make_pdf(paths, options, progress, cancel):
                 progress('skipped', {'path': str(path), 'code': error_code(error)})
             progress('progress', {'index': index + 1, 'total': len(paths), 'path': str(path)})
         if combined and result.page_count:
-            save(result, paths[0], 'combined' if len(paths) > 1 else 'made')
+            save(result, paths[0], pdf_name(paths, options.get('name', '')))
         if not outputs:
             raise JobError('no_outputs')
         return outputs

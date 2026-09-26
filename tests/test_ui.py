@@ -1,6 +1,9 @@
 import time
 from pathlib import Path
 from PySide6.QtCore import QModelIndex, QSettings, QTimer, Qt
+from PySide6.QtGui import QFontMetrics
+from PySide6.QtWidgets import QApplication
+from ui.file_list import TILE, two_lines
 from ui.window import Window
 
 
@@ -72,7 +75,8 @@ def test_select_all_remove_and_roomy_list(qtbot, tmp_path):
     assert not screen.select_all.isEnabled() and not screen.remove_button.isEnabled()
     screen.add_files([str(tmp_path / f'{i}.jpg') for i in range(6)])
     qtbot.wait(50)
-    assert screen.list.height() >= 3 * 64
+    first, second = (screen.list.visualRect(screen.model.index(i)) for i in range(2))
+    assert first.top() == second.top() and screen.list.height() >= TILE.height()  # Tiles wrap in a grid.
     assert screen.drop.height() < 100
     screen.select_all.click()
     assert screen.remove_button.isEnabled()
@@ -83,3 +87,39 @@ def test_select_all_remove_and_roomy_list(qtbot, tmp_path):
     screen.list.setCurrentIndex(screen.model.index(1))
     qtbot.keyClick(screen.list, Qt.Key.Key_Delete)
     assert [Path(p).name for p in screen.model.paths] == ['0.jpg', '2.jpg']
+
+
+def test_file_name_follows_first_file_until_typed(qtbot, tmp_path, monkeypatch):
+    window = Window(QSettings(str(tmp_path / 'settings.ini'), QSettings.Format.IniFormat))
+    qtbot.addWidget(window)
+    window.show()
+    window.show_screen(window.make)
+    screen, model = window.make, window.make.model
+    screen.add_files([str(tmp_path / f'{name}.jpg') for name in 'abc'])
+
+    def move_first_to_end():
+        model.dropMimeData(model.mimeData([model.index(0)]), Qt.DropAction.MoveAction, 3, 0, QModelIndex())
+
+    assert screen.name.text() == 'a_combined'
+    move_first_to_end()
+    assert screen.name.text() == 'b_combined'
+    screen.name.selectAll()
+    qtbot.keyClicks(screen.name, 'Job 42')
+    move_first_to_end()
+    assert screen.name.text() == 'Job 42'
+    started = {}
+    monkeypatch.setattr(screen.jobs, 'start', lambda paths, options: started.update(options))
+    screen.start()
+    assert started['name'] == 'Job 42'
+    screen.reset()
+    screen.add_files([str(tmp_path / 'd.jpg')])
+    assert screen.name.text() == 'd_made'
+    screen.mode.setCurrentIndex(screen.mode.findData(False))
+    assert not screen.name_box.isVisible()
+
+
+def test_long_names_wrap_after_a_separator(qapp):
+    metrics = QFontMetrics(QApplication.font())
+    width = metrics.horizontalAdvance('customer-order-1-fin')
+    assert two_lines('customer-order-1-final-version.jpg', metrics, width) == ['customer-order-1-', 'final-version.jpg']
+    assert two_lines('short.jpg', metrics, width) == ['short.jpg']
