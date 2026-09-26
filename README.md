@@ -2,7 +2,7 @@
 
 Offline Windows tools for a print shop. Phase 1 implements **Make PDF** for images and existing PDFs, with a shared desktop interface, background workers, cancellation, settings, and logs.
 
-Download the portable Windows x64 ZIP from a successful [Windows build](https://github.com/Xpond/printX/actions/workflows/windows.yml). Extract the whole ZIP and open **PrintShop Tools.exe**. See [the VM test checklist](PHASE1-TESTING.md).
+[Download the Windows installer (.exe)](https://github.com/Xpond/printX/releases/latest/download/PrintShop-Tools-Setup.exe). Run it, then open **PrintShop Tools** from the Start menu. Supports Windows 10/11 x64; no Python installation or ZIP extraction needed. See [the test checklist](PHASE1-TESTING.md). Downloads are public once the repository is public.
 
 ## Development
 
@@ -17,7 +17,9 @@ python -m pytest -q
 python app.py
 ```
 
-On Windows, `build.bat` installs pinned dependencies, runs tests, and creates a one-folder build in `dist/PrintShop Tools`. Python 3.14 must be installed on the build machine; the finished app needs no Python installation. GitHub Actions builds and tests it on Windows automatically.
+On Windows, install Python 3.14 and [Inno Setup 6](https://jrsoftware.org/isdl.php), then double-click `build.bat`. It installs pinned dependencies, runs tests, creates the one-folder app and `dist/installer/PrintShop-Tools-Setup.exe`, then tests installation, launch, and uninstall.
+
+GitHub Actions performs the same Windows checks. Push a version tag such as `v0.1.0` (matching `AppVersion` in `installer.iss`) to publish the tested installer and its SHA-256 checksum to GitHub Releases. The download link above always points to the latest release.
 
 Processing is in `core/`, without Qt. One warm worker process handles PDF jobs; a separate lazy process makes visible thumbnails. Cancelling terminates the job process and removes its private staging directories. Completed PDFs are published atomically without overwriting existing files. On Windows, this uses same-volume rename; on Linux, a hard link publishes the completed file.
 
@@ -25,4 +27,4 @@ The `samples/` images are generated test graphics, not real photos. Regenerate t
 
 All application copy is in `ui/text.py`. Atkinson Hyperlegible is bundled under the [SIL Open Font License](assets/fonts/OFL.txt), from [Google Fonts](https://github.com/google/fonts/tree/main/ofl/atkinsonhyperlegible).
 
-The full specification and phase gates are in [PLAN.md](PLAN.md). Installer work and shop documentation follow in phases 5 and 6.
+The full specification and phase gates are in [PLAN.md](PLAN.md); current status is in [AGENTS.md](AGENTS.md). Installer delivery was brought forward for testing; packaging completion and shop documentation remain in phases 5 and 6.

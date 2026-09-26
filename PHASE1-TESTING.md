@@ -1,6 +1,6 @@
 # Phase 1 — Windows VM test
 
-Download the Windows artifact from the repository's Actions tab. Extract the entire ZIP to a folder in Windows, then open **PrintShop Tools.exe**. Keep `_internal` beside the executable. No Python installation is needed.
+[Download PrintShop-Tools-Setup.exe](https://github.com/Xpond/printX/releases/latest/download/PrintShop-Tools-Setup.exe) directly in Windows and run it. Open **PrintShop Tools** from the Start menu. No Python installation is needed. Open **Start → PrintShop Tools → Sample files** for the included examples.
 
 Only **Make PDF** is active in this phase. The other tools arrive in the phases listed in PLAN.md.
 
@@ -18,4 +18,4 @@ The VM has 2 GB RAM, so this version processes one PDF job at a time. First use 
 
 If something fails, send the visible message and `%LOCALAPPDATA%\PrintShop Tools\logs\app.log` and `worker.log`. Include whether it happened before or after pressing Make PDF.
 
-Home drop routing, Office conversion, and before/after previews are scheduled for phase 4. This portable test build precedes the installer in phase 5.
+Home drop routing, Office conversion, and before/after previews are scheduled for phase 4. Installer delivery was brought forward so each phase can be downloaded directly on Windows.

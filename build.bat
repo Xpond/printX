@@ -11,7 +11,11 @@ if errorlevel 1 goto fail
 if errorlevel 1 goto fail
 .venv\Scripts\python.exe scripts\build.py
 if errorlevel 1 goto fail
-echo Build ready: dist\PrintShop Tools\PrintShop Tools.exe
+.venv\Scripts\python.exe scripts\build_installer.py
+if errorlevel 1 goto fail
+.venv\Scripts\python.exe scripts\check_installer.py artifacts\installer-smoke
+if errorlevel 1 goto fail
+echo Build ready: dist\installer\PrintShop-Tools-Setup.exe
 pause
 exit /b 0
 :fail

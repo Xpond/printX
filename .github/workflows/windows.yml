@@ -2,6 +2,7 @@ name: Windows build
 on:
   push:
     branches: [main]
+    tags: ['v*']
   workflow_dispatch:
 permissions:
   contents: read
@@ -33,18 +34,38 @@ jobs:
           Copy-Item 'dist/PrintShop Tools' $appFolder -Recurse
           $report = Join-Path $env:RUNNER_TEMP 'smoke-results'
           python scripts/check_frozen.py "$appFolder/PrintShop Tools.exe" $report
-      - name: Include manual test files
-        run: |
-          Copy-Item samples 'dist/PrintShop Tools/samples' -Recurse
-          Copy-Item PHASE1-TESTING.md 'dist/PrintShop Tools/Read me first.md'
+      - name: Build installer
+        run: python scripts/build_installer.py
+      - name: Test installation, installed app, and uninstall
+        run: python scripts/check_installer.py "$env:RUNNER_TEMP/installer-smoke"
       - uses: actions/upload-artifact@v4
         with:
-          name: PrintShop-Tools-Windows-x64-phase1
-          path: dist/PrintShop Tools/
+          name: Windows-installer
+          path: dist/installer/
           retention-days: 30
           compression-level: 6
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: Windows-smoke-screenshots
-          path: '${{ runner.temp }}/smoke-results/'
+          path: |
+            ${{ runner.temp }}/smoke-results/
+            ${{ runner.temp }}/installer-smoke/
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: Windows-installer
+          path: installer
+      - name: Publish Windows download
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" installer/PrintShop-Tools-Setup.exe installer/SHA256SUMS.txt --verify-tag --title "PrintShop Tools $RELEASE_TAG" --notes-file RELEASE-NOTES.md
