@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from PySide6.QtCore import QAbstractListModel, QByteArray, QMimeData, QModelIndex, QSize, Qt, Signal
 from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QAbstractItemView, QListView, QSizePolicy
+from PySide6.QtWidgets import QAbstractItemView, QApplication, QListView, QSizePolicy
 from ui import text as T
 from ui.jobs import Thumbnails
 
@@ -106,6 +106,7 @@ class FileList(QListView):
 
     def __init__(self, model):
         super().__init__()
+        self.setFont(QApplication.font())
         self.setModel(model)
         self.setUniformItemSizes(True)
         self.setIconSize(QSize(56, 56))

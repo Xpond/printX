@@ -1,5 +1,5 @@
 from pathlib import Path
-from PySide6.QtCore import QSettings
+from PySide6.QtCore import QSettings, QTimer
 from PySide6.QtGui import QIcon, QKeySequence, QShortcut
 from PySide6.QtWidgets import QHBoxLayout, QMainWindow, QMessageBox, QScrollArea, QStackedWidget, QVBoxLayout, QWidget
 from ui import text as T
@@ -74,6 +74,8 @@ class Window(QMainWindow):
     def job_changed(self, kind, payload):
         self.back.setEnabled(not self.make.jobs.busy)
         self.settings_button.setEnabled(not self.make.jobs.busy)
+        if kind in ('done', 'cancelled', 'failed') and self.make.outputs.count():
+            QTimer.singleShot(0, lambda: self.centralWidget().ensureWidgetVisible(self.make.results, 0, 8))
 
     def closeEvent(self, event):
         if self.make.jobs.busy:
