@@ -60,3 +60,26 @@ def test_200_files_added_without_reading_them(qtbot, tmp_path):
     assert time.monotonic() - started < .5
     assert window.make.model.rowCount() == 200
     assert window.make.model.thumbnails.process is None
+
+
+def test_select_all_remove_and_roomy_list(qtbot, tmp_path):
+    window = Window(QSettings(str(tmp_path / 'settings.ini'), QSettings.Format.IniFormat))
+    qtbot.addWidget(window)
+    window.resize(1280, 650)
+    window.show()
+    window.show_screen(window.make)
+    screen = window.make
+    assert not screen.select_all.isEnabled() and not screen.remove_button.isEnabled()
+    screen.add_files([str(tmp_path / f'{i}.jpg') for i in range(6)])
+    qtbot.wait(50)
+    assert screen.list.height() >= 3 * 64
+    assert screen.drop.height() < 100
+    screen.select_all.click()
+    assert screen.remove_button.isEnabled()
+    screen.remove_button.click()
+    assert screen.model.paths == []
+    assert not screen.remove_button.isEnabled() and screen.drop.minimumHeight() == 126
+    screen.add_files([str(tmp_path / f'{i}.jpg') for i in range(3)])
+    screen.list.setCurrentIndex(screen.model.index(1))
+    qtbot.keyClick(screen.list, Qt.Key.Key_Delete)
+    assert [Path(p).name for p in screen.model.paths] == ['0.jpg', '2.jpg']

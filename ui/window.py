@@ -18,7 +18,7 @@ class Window(QMainWindow):
         self.setMinimumSize(680, 480)
         self.settings = settings or QSettings(T.APP, T.APP)
         root = QWidget()
-        root.setMinimumSize(730, 780)
+        root.setMinimumWidth(730)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QScrollArea.Shape.NoFrame)

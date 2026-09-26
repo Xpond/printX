@@ -28,8 +28,15 @@ class ToolScreen(QWidget):
         self.model = FileModel(self)
         self.list = FileList(self.model)
         self.list.files.connect(self.add_files)
+        self.list.remove_requested.connect(self.remove)
         toolbar.addWidget(button(T.SORT, self.model.sort))
-        toolbar.addWidget(button(T.REMOVE, self.remove))
+        self.select_all = button(T.SELECT_ALL, self.list.selectAll)
+        self.remove_button = button(T.REMOVE, self.remove)
+        for widget in (self.select_all, self.remove_button):
+            widget.setToolTip(T.REMOVE_TIP)
+            toolbar.addWidget(widget)
+        self.list.selectionModel().selectionChanged.connect(self.update_selection)
+        self.model.changed.connect(self.update_selection)
         inputs.addLayout(toolbar)
         inputs.addWidget(self.list, 1)
         self.options_layout = QVBoxLayout()
@@ -67,6 +74,7 @@ class ToolScreen(QWidget):
             result_layout.addWidget(widget)
         self.results.hide()
         self.layout.addWidget(self.results)
+        self.update_selection()
 
     def browse(self):
         paths, _ = QFileDialog.getOpenFileNames(self, T.BROWSE, '', T.FILTER)
@@ -77,7 +85,15 @@ class ToolScreen(QWidget):
         self.model.add(paths)
 
     def remove(self):
-        self.model.remove({i.row() for i in self.list.selectedIndexes()})
+        rows = {i.row() for i in self.list.selectedIndexes()}
+        if rows:
+            self.model.remove(rows)
+
+    def update_selection(self):
+        count = len(self.model.paths)
+        self.drop.set_compact(bool(count))
+        self.select_all.setEnabled(bool(count))
+        self.remove_button.setEnabled(self.list.selectionModel().hasSelection())
 
     def message(self, value):
         self.messages.show()
