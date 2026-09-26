@@ -115,7 +115,6 @@ class FileList(QListView):
         self.setWrapping(True)
         self.setResizeMode(QListView.ResizeMode.Adjust)
         self.setSpacing(4)
-        self.setTextElideMode(Qt.TextElideMode.ElideMiddle)
         self.setUniformItemSizes(True)
         self.setIconSize(QSize(ICON, ICON))
         self.setMinimumHeight(TILE.height() + 12)
@@ -160,7 +159,5 @@ class FileList(QListView):
         super().paintEvent(event)
         if not self.model().rowCount():
             painter = QPainter(self.viewport())
-            color = self.palette().text().color()
-            color.setAlpha(150)
-            painter.setPen(color)
+            painter.setPen(self.palette().placeholderText().color())
             painter.drawText(self.viewport().rect(), Qt.AlignmentFlag.AlignCenter, T.EMPTY_DROP)

@@ -22,7 +22,7 @@ class MakePdf(ToolScreen):
         self.paper.setToolTip(T.PDF_SIZE_NOTE)
         self.name = QLineEdit()
         self.name.setMaxLength(120)
-        self.name.setMinimumWidth(240)
+        self.name.setMinimumWidth(160)
         self.name.setMaximumWidth(480)
         self.name.setAccessibleName(T.NAME)
         self.name_label = QLabel(T.NAME)
@@ -63,11 +63,12 @@ class MakePdf(ToolScreen):
             self.name.setCursorPosition(0)
 
     def update_hint(self):
-        self.name_label.setVisible(bool(self.mode.currentData()))
-        self.name_box.setVisible(bool(self.mode.currentData()))
+        combined = bool(self.mode.currentData())
+        self.name_label.setVisible(combined)
+        self.name_box.setVisible(combined)
         folder = self.settings.value('output_folder', '')
         self.output_hint.setText(T.SAVED_FIXED.format(folder=folder) if folder else
-                                T.SAVED_NEXT if self.mode.currentData() else T.SAVED_EACH)
+                                T.SAVED_NEXT if combined else T.SAVED_EACH)
 
     def refresh_settings(self):
         self.update_hint()
@@ -91,6 +92,7 @@ class MakePdf(ToolScreen):
         self.outputs.clear()
         self.results.hide()
         self.inputs.setEnabled(False)
+        self.options.setEnabled(False)
         self.run.setEnabled(False)
         self.run.setText(T.RUNNING)
         self.progress.setRange(0, len(self.model.paths))
@@ -124,6 +126,7 @@ class MakePdf(ToolScreen):
             self.outputs.addItem(Path(data['path']).name, data['path'])
         elif kind in ('done', 'failed', 'cancelled'):
             self.inputs.setEnabled(True)
+            self.options.setEnabled(True)
             self.cancel.hide()
             self.progress.hide()
             self.update_count()
