@@ -11,9 +11,14 @@ executable = Path(sys.argv[1]).resolve()
 destination = Path(sys.argv[2]).resolve()
 destination.mkdir(parents=True, exist_ok=True)
 environment = dict(os.environ, QT_QPA_PLATFORM='windows' if os.name == 'nt' else 'offscreen',
-                   QT_QPA_PLATFORMTHEME='generic')
+                   LOCALAPPDATA=str(destination / 'state'), XDG_STATE_HOME=str(destination / 'state'))
+if os.name == 'nt':
+    environment.pop('QT_QPA_PLATFORMTHEME', None)
+else:
+    environment['QT_QPA_PLATFORMTHEME'] = 'generic'
 started = time.monotonic()
-process = subprocess.Popen([str(executable), '--smoke-test', str(destination)],
+command = ([sys.executable] if executable.suffix == '.py' else []) + [str(executable)]
+process = subprocess.Popen(command + ['--smoke-test', str(destination)],
                            cwd=tempfile.gettempdir(), env=environment)
 first_frame = None
 while process.poll() is None and time.monotonic() - started < 90:
@@ -25,6 +30,8 @@ if process.poll() is None:
     process.wait()
     raise SystemExit('Packaged smoke test timed out')
 if process.returncode != 0:
+    for log in destination.rglob('*.log'):
+        print(log.read_text(encoding='utf-8', errors='replace')[-10000:])
     raise SystemExit(f'Packaged app exited {process.returncode}')
 report = json.loads((destination / 'smoke.json').read_text())
 assert report['passed']

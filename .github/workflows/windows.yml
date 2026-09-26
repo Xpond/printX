@@ -21,6 +21,9 @@ jobs:
           python -m pip install --only-binary=:all: -r requirements-dev.txt
       - name: Test core and GUI
         run: python -m pytest -q
+      - name: Test native Windows source startup
+        run: |
+          python scripts/check_frozen.py app.py "$env:RUNNER_TEMP/source-smoke"
       - name: Build portable executable
         run: python scripts/build.py
       - name: Test executable outside checkout

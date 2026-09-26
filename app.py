@@ -6,17 +6,22 @@ def main():
     started = time.perf_counter()
     import sys
     from pathlib import Path
-    from PySide6.QtWidgets import QApplication
-    from PySide6.QtCore import QSettings
+    import logging
     from logging_setup import configure_logging
+    configure_logging()
+    logging.info('Loading desktop interface')
+    from PySide6.QtWidgets import QApplication
+    from PySide6.QtCore import QSettings, qInstallMessageHandler
     from ui import text as T
     from ui.theme import setup_theme
     from ui.window import Window
 
+    qInstallMessageHandler(lambda mode, context, message: logging.info('Qt: %s', message))
+    logging.info('Creating Qt application')
     app = QApplication(sys.argv)
     app.setApplicationName(T.APP)
     app.setOrganizationName(T.APP)
-    configure_logging()
+    logging.info('Applying desktop theme')
     setup_theme(app)
     smoke = '--smoke-test' in sys.argv
     if smoke:
@@ -25,9 +30,9 @@ def main():
         settings = QSettings(str(destination / 'settings.ini'), QSettings.Format.IniFormat)
     else:
         settings = None
+    logging.info('Creating main window')
     window = Window(settings)
     window.show()
-    import logging
     logging.info('Window shown in %.3fs', time.perf_counter() - started)
     if smoke:
         from scripts.smoke import run_smoke
