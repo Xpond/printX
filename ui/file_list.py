@@ -1,10 +1,13 @@
 import json
 from pathlib import Path
 from PySide6.QtCore import QAbstractListModel, QByteArray, QMimeData, QModelIndex, QSize, Qt, Signal
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPainter, QPixmap
 from PySide6.QtWidgets import QAbstractItemView, QApplication, QListView, QSizePolicy
 from ui import text as T
 from ui.jobs import Thumbnails
+
+
+ROW, ICON = 64, 48
 
 
 class FileModel(QAbstractListModel):
@@ -26,7 +29,7 @@ class FileModel(QAbstractListModel):
             return None
         path = self.paths[index.row()]
         if role == Qt.ItemDataRole.SizeHintRole:
-            return QSize(100, 76)
+            return QSize(100, ROW)
         if role == Qt.ItemDataRole.ToolTipRole:
             return path
         if role not in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.DecorationRole):
@@ -40,10 +43,14 @@ class FileModel(QAbstractListModel):
 
     def thumbnail_ready(self, path, result):
         data, kind, value = result
-        pixmap = QPixmap()
-        if data:
-            pixmap.loadFromData(data)
-            pixmap = pixmap.scaled(56, 56, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        pixmap = QPixmap(ICON, ICON)
+        pixmap.fill(Qt.GlobalColor.transparent)
+        image = QPixmap()
+        if data and image.loadFromData(data):
+            image = image.scaled(ICON, ICON, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            painter = QPainter(pixmap)  # Centre on a square so every file name lines up.
+            painter.drawPixmap((ICON - image.width()) // 2, (ICON - image.height()) // 2, image)
+            painter.end()
         if kind == 'pages':
             detail = T.PAGES.format(count=value)
         elif kind == 'pixels':
@@ -103,20 +110,27 @@ class FileModel(QAbstractListModel):
 
 class FileList(QListView):
     files = Signal(list)
+    remove_requested = Signal()
 
     def __init__(self, model):
         super().__init__()
         self.setFont(QApplication.font())
         self.setModel(model)
         self.setUniformItemSizes(True)
-        self.setIconSize(QSize(56, 56))
-        self.setMinimumHeight(92)
+        self.setIconSize(QSize(ICON, ICON))
+        self.setMinimumHeight(ROW * 3 + 2)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Ignored)
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
         self.setDefaultDropAction(Qt.DropAction.MoveAction)
         self.setDropIndicatorShown(True)
         self.setAccessibleName(T.FILE_COUNT.format(count=0))
+
+    def keyPressEvent(self, event):
+        if event.key() in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace) and self.selectionModel().hasSelection():
+            self.remove_requested.emit()
+        else:
+            super().keyPressEvent(event)
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():

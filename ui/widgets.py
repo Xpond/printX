@@ -36,11 +36,20 @@ class DropZone(QWidget):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setAccessibleName(T.DROP + ' ' + T.DROP_HINT)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setContentsMargins(20, 12, 20, 12)
+        self.lines = []
         for value, muted in [(T.DROP, False), (T.DROP_HINT, True), (T.FORMATS, True)]:
             item = label(value, muted=muted)
             item.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(item)
+            self.lines.append(item)
+
+    def set_compact(self, compact):
+        """Shrink to one line once files are listed, leaving room for the list."""
+        self.setMinimumHeight(56 if compact else 126)
+        self.lines[0].setText(T.DROP_MORE if compact else T.DROP)
+        for item in self.lines[1:]:
+            item.setVisible(not compact)
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
@@ -64,7 +73,8 @@ class DropZone(QWidget):
         painter = QPainter(self)
         color = QColor('#d74283' if self.palette().window().color().lightness() > 128 else '#f36fa5')
         painter.setPen(QPen(color, 3))
-        w, h, inset, arm = self.width(), self.height(), 3, 24
+        w, h, inset = self.width(), self.height(), 3
+        arm = min(24, h // 3)
         for x, dx in [(inset, 1), (w - inset, -1)]:
             for y, dy in [(inset, 1), (h - inset, -1)]:
                 painter.drawLine(x, y, x + dx * arm, y)
