@@ -1,0 +1,46 @@
+name: Windows build
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: pip
+          cache-dependency-path: 'requirements*.txt'
+      - name: Install pinned wheels
+        run: python -m pip install --only-binary=:all: -r requirements-dev.txt
+      - name: Test core and GUI
+        run: python -m pytest -q
+      - name: Build portable executable
+        run: python scripts/build.py
+      - name: Test executable outside checkout
+        shell: pwsh
+        run: |
+          $appFolder = Join-Path $env:RUNNER_TEMP 'PrintShop portable'
+          Copy-Item 'dist/PrintShop Tools' $appFolder -Recurse
+          $report = Join-Path $env:RUNNER_TEMP 'smoke-results'
+          python scripts/check_frozen.py "$appFolder/PrintShop Tools.exe" $report
+      - name: Include manual test files
+        run: |
+          Copy-Item samples 'dist/PrintShop Tools/samples' -Recurse
+          Copy-Item PHASE1-TESTING.md 'dist/PrintShop Tools/Read me first.md'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PrintShop-Tools-Windows-x64-phase1
+          path: dist/PrintShop Tools/
+          retention-days: 30
+          compression-level: 6
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Windows-smoke-screenshots
+          path: '${{ runner.temp }}/smoke-results/'
