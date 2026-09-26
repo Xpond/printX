@@ -1,3 +1,5 @@
+**New in 0.1.1:** the Make PDF file list keeps at least three rows visible on laptop screens, and the drop area shrinks once files are added. Remove several files at once with **Select all** and **Remove selected**, or select files and press Delete.
+
 Phase 1: Make PDF from images and existing PDFs, with ordering, paper sizes, password prompts, background processing, and cancellation.
 
 Download **PrintShop-Tools-Setup.exe**, run it, then open **PrintShop Tools** from the Start menu. Windows 10/11 x64; no Python installation or ZIP extraction needed. Installation is for your Windows account and includes an uninstaller.

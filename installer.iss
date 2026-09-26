@@ -1,7 +1,7 @@
 [Setup]
 AppId={{C7F8B843-FB03-43BC-9CD0-B04303E88C80}
 AppName=PrintShop Tools
-AppVersion=0.1.0
+AppVersion=0.1.1
 AppPublisher=PrintShop Tools
 AppPublisherURL=https://github.com/Xpond/printX
 DefaultDirName={localappdata}\Programs\PrintShop Tools
