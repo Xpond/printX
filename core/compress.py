@@ -1,8 +1,11 @@
 """Compress PDFs with Ghostscript, run inside the worker so cancelling the worker also stops it."""
+import contextlib
 import ctypes
 import ctypes.util
 import logging
+import os
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -60,7 +63,12 @@ def compress(paths, options, progress, cancel):
         document, password = open_pdf(path, progress, cancel)
         with document:
             pages = document.page_count
-        temp, messages = staging(path, options) / f'{index}.pdf', []
+        stage, messages = staging(path, options), []
+        original, temp = stage / f'{index}-original.pdf', stage / f'{index}.pdf'
+        try:
+            os.link(path, original)
+        except OSError:  # Another drive, or a share without hard links.
+            shutil.copyfile(path, original)
 
         def line(text):
             page = re.fullmatch(r'Page (\d+)', text)
@@ -70,10 +78,11 @@ def compress(paths, options, progress, cancel):
             elif text.strip():
                 messages.append(text)
 
-        args = [*SETTINGS, *LEVELS[options['level']], f'-sOutputFile={temp}']
+        args = [*SETTINGS, *LEVELS[options['level']], f'-sOutputFile={temp.name}']
         if password:
             args.append(f'-sPDFPassword={password}')
-        finished = ghostscript(args + [str(path)], line)
+        with contextlib.chdir(stage):  # Windows Ghostscript cannot open paths with emoji, so it gets plain names.
+            finished = ghostscript(args + [original.name], line)
         if finished:
             with pymupdf.open(temp) as result:
                 finished = result.page_count == pages  # Ghostscript can succeed with pages missing.

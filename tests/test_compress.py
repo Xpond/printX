@@ -3,6 +3,7 @@ import uuid
 from pathlib import Path
 
 import pymupdf
+import core.compress
 from core.compress import compress
 from core.files import JobError
 
@@ -66,3 +67,12 @@ def test_password_and_skipped_files(photo_pdf, tmp_path):
     with pymupdf.open(outputs[0]) as doc:
         assert not doc.needs_pass and doc.page_count == 2
     assert [data['code'] for kind, data in events if kind == 'skipped'] == ['not_pdf', 'corrupt', 'missing']
+
+
+def test_ghostscript_only_sees_plain_names(photo_pdf, monkeypatch):
+    """Windows Ghostscript cannot open paths with emoji, so it must never be given one."""
+    seen, run_ghostscript = [], core.compress.ghostscript
+    monkeypatch.setattr(core.compress, 'ghostscript', lambda args, line: seen.extend(args) or run_ghostscript(args, line))
+    (output,), _ = run([photo_pdf('café 🖨.pdf')])
+    assert Path(output).name == 'café 🖨_compressed.pdf'
+    assert seen and all(arg.isascii() for arg in seen)
