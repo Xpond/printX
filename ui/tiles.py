@@ -1,10 +1,14 @@
 """How a file looks in the grid: a centred thumbnail, a two-line name, then its size or pages."""
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication, QStyledItemDelegate, QStyleOptionViewItem
 
 ICON = 128
 TILE = QSize(ICON + 40, ICON + 80)  # Thumbnail above two name lines and a detail line.
+BADGE_TILE = QSize(ICON + 60, ICON + 122)  # Wider for print sizes, plus a second detail line and a badge.
+BADGE = Qt.ItemDataRole.UserRole + 1  # (text, grade) painted as a coloured dot and text.
+COLORS = {'big': ('#2e7d32', '#7bc67e'), 'sharp': ('#2e7d32', '#7bc67e'),
+          'soft': ('#b86e00', '#f2b24c'), 'blurry': ('#c62828', '#f28b82')}  # Light, dark.
 
 
 def square(data=b''):
@@ -44,3 +48,23 @@ class Tiles(QStyledItemDelegate):
         option.displayAlignment = Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop
         name, _, detail = option.text.partition('\u2028')  # Views show '\n' as a line separator.
         option.text = '\u2028'.join(two_lines(name, option.fontMetrics, option.rect.width() - 24) + [detail])
+
+    def paint(self, painter, option, index):
+        super().paint(painter, option, index)
+        badge = index.data(BADGE)
+        if not badge:
+            return
+        text, grade = badge
+        metrics = option.fontMetrics
+        text = metrics.elidedText(text, Qt.TextElideMode.ElideRight, option.rect.width() - 36)
+        left = option.rect.center().x() - (metrics.horizontalAdvance(text) + 14) // 2
+        top = option.rect.bottom() - 8 - metrics.height()
+        dark = option.palette.window().color().lightness() < 128
+        painter.save()
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(COLORS[grade][dark]))
+        painter.drawEllipse(QRectF(left, top + (metrics.height() - 9) / 2, 9, 9))
+        painter.setPen(option.palette.text().color())
+        painter.drawText(left + 14, top + metrics.ascent(), text)
+        painter.restore()

@@ -5,7 +5,7 @@ from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import QAbstractItemView, QApplication, QListView, QSizePolicy
 from ui import text as T
 from ui.jobs import Thumbnails
-from ui.tiles import ICON, TILE, Tiles, square
+from ui.tiles import BADGE, ICON, TILE, Tiles, square
 
 
 class FileModel(QAbstractListModel):
@@ -15,8 +15,10 @@ class FileModel(QAbstractListModel):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.paths = []
-        self.cache = {}
+        self.cache = {}  # Path: (thumbnail, detail, pixel size or None)
         self.blank = square()
+        self.tile = TILE
+        self.describe = None  # Optional (width, height) -> (extra line, badge) for images.
         self.thumbnails = Thumbnails(self)
         self.thumbnails.ready.connect(self.thumbnail_ready)
 
@@ -28,17 +30,20 @@ class FileModel(QAbstractListModel):
             return None
         path = self.paths[index.row()]
         if role == Qt.ItemDataRole.SizeHintRole:
-            return TILE
+            return self.tile
         if role == Qt.ItemDataRole.ToolTipRole:
             return path
-        if role not in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.DecorationRole):
+        if role not in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.DecorationRole, BADGE):
             return None
         if path not in self.cache:
             self.thumbnails.request(path)
-        pixmap, detail = self.cache.get(path, (self.blank, T.READING))
+        pixmap, detail, size = self.cache.get(path, (self.blank, T.READING, None))
+        extra = self.describe(size) if self.describe and size else None
+        if role == BADGE:
+            return extra and extra[1]
         if role == Qt.ItemDataRole.DecorationRole:
             return pixmap
-        return f'{Path(path).name}\n{detail}'
+        return f'{Path(path).name}\n{detail}' + (f'\n{extra[0]}' if extra else '')
 
     def thumbnail_ready(self, path, result):
         data, kind, value = result
@@ -48,10 +53,15 @@ class FileModel(QAbstractListModel):
             detail = T.PIXELS.format(width=value[0], height=value[1])
         else:
             detail = T.THUMB[kind]
-        self.cache[path] = (square(data), detail)
+        self.cache[path] = (square(data), detail, value if kind == 'pixels' else None)
         if path in self.paths:
             index = self.index(self.paths.index(path))
             self.dataChanged.emit(index, index)
+
+    def refresh(self):
+        """Repaint every tile, after options that change what the tiles say."""
+        if self.paths:
+            self.dataChanged.emit(self.index(0), self.index(len(self.paths) - 1))
 
     def replace(self, paths):
         self.beginResetModel()
@@ -104,8 +114,9 @@ class FileList(QListView):
     browse = Signal()
     remove_requested = Signal()
 
-    def __init__(self, model):
+    def __init__(self, model, empty):
         super().__init__()
+        self.empty = empty
         self.setFont(QApplication.font())
         self.setObjectName('files')
         self.setModel(model)
@@ -123,7 +134,7 @@ class FileList(QListView):
         self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
         self.setDefaultDropAction(Qt.DropAction.MoveAction)
         self.setDropIndicatorShown(True)
-        self.setAccessibleName(T.FILE_COUNT.format(count=0))
+        self.setAccessibleName(empty.splitlines()[0])
 
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace) and self.selectionModel().hasSelection():
@@ -160,4 +171,4 @@ class FileList(QListView):
         if not self.model().rowCount():
             painter = QPainter(self.viewport())
             painter.setPen(self.palette().placeholderText().color())
-            painter.drawText(self.viewport().rect(), Qt.AlignmentFlag.AlignCenter, T.EMPTY_DROP)
+            painter.drawText(self.viewport().rect(), Qt.AlignmentFlag.AlignCenter, self.empty)

@@ -6,6 +6,7 @@ from ui import text as T
 from ui.home import Home
 from ui.make_pdf import MakePdf
 from ui.settings import Settings
+from ui.upscale import Upscale
 from ui.widgets import button, label
 
 
@@ -36,50 +37,60 @@ class Window(QMainWindow):
         layout.addLayout(nav)
         self.stack = QStackedWidget()
         layout.addWidget(self.stack, 1)
-        self.home = Home()
+        self.upscale = Upscale(self.settings)
         self.make = MakePdf(self.settings)
+        self.tools = {'upscale': self.upscale, 'make': self.make}
+        self.home = Home(self.tools)
         self.preferences = Settings(self.settings)
-        self.preferences.saved.connect(self.make.refresh_settings)
-        for widget in (self.home, self.make, self.preferences):
+        for widget in (self.home, *self.tools.values(), self.preferences):
             self.stack.addWidget(widget)
-        self.home.selected.connect(lambda tool: self.show_screen(self.make))
+        for tool in self.tools.values():
+            self.preferences.saved.connect(tool.refresh_settings)
+            tool.jobs.event.connect(self.job_changed)
+        self.home.selected.connect(lambda key: self.show_screen(self.tools[key]))
         self.show_screen(self.home)
         for sequence, callback in [('Ctrl+O', self.add_files), ('Return', self.run_job), ('Escape', self.go_back)]:
             shortcut = QShortcut(QKeySequence(sequence), self)
             shortcut.activated.connect(callback)
-        self.make.jobs.event.connect(self.job_changed)
+
+    def busy(self):
+        return any(tool.jobs.busy for tool in self.tools.values())
+
+    def current_tool(self):
+        screen = self.stack.currentWidget()
+        return screen if screen in self.tools.values() else None
 
     def show_screen(self, screen):
-        if self.make.jobs.busy:
+        if self.busy():
             return
         self.stack.setCurrentWidget(screen)
         self.title.setText(getattr(screen, 'title', T.APP))
         self.back.setVisible(screen != self.home)
         self.settings_button.setVisible(screen != self.preferences)
-        if screen == self.make:
-            self.make.update_hint()
+        if self.current_tool():
+            screen.update_hint()
 
     def go_back(self):
-        if not self.make.jobs.busy:
+        if not self.busy():
             self.show_screen(self.home)
 
     def add_files(self):
-        if not self.make.jobs.busy:
-            self.show_screen(self.make)
-            self.make.browse()
+        if self.current_tool() and not self.busy():
+            self.current_tool().browse()
 
     def run_job(self):
-        if self.stack.currentWidget() == self.make:
-            self.make.start()
+        if self.current_tool():
+            self.current_tool().start()
 
     def job_changed(self, kind, payload):
-        self.back.setEnabled(not self.make.jobs.busy)
-        self.settings_button.setEnabled(not self.make.jobs.busy)
-        if kind in ('done', 'cancelled', 'failed') and self.make.outputs.count():
-            QTimer.singleShot(0, lambda: self.centralWidget().ensureWidgetVisible(self.make.results, 0, 8))
+        self.back.setEnabled(not self.busy())
+        self.settings_button.setEnabled(not self.busy())
+        tool = self.current_tool()
+        if kind in ('done', 'cancelled', 'failed') and tool and tool.outputs.count():
+            QTimer.singleShot(0, lambda: self.centralWidget().ensureWidgetVisible(tool.results, 0, 8))
 
     def closeEvent(self, event):
-        if self.make.jobs.busy:
+        if self.busy():
             box = QMessageBox(self)
             box.setWindowTitle(T.CLOSE_TITLE)
             box.setText(T.CLOSE_MESSAGE)
@@ -89,7 +100,8 @@ class Window(QMainWindow):
             if box.clickedButton() != yes:
                 event.ignore()
                 return
-        self.make.jobs.shutdown()
-        self.make.model.thumbnails.shutdown()
+        for tool in self.tools.values():
+            tool.jobs.shutdown()
+            tool.model.thumbnails.shutdown()
         self.settings.sync()
         event.accept()

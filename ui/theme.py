@@ -20,6 +20,7 @@ def apply_theme(app, dark=None):
     surface, line = ('#292c30', '#50545a') if dark else ('#ffffff', '#cfcec6')
     muted = '#b8bcc3' if dark else '#5b6065'
     magenta = '#f36fa5' if dark else '#ac1557'
+    cyan = '#69d5e8' if dark else '#007b91'  # Image tools; magenta marks PDF tools.
     palette = QPalette()
     for role, color in [(QPalette.Window, paper), (QPalette.WindowText, ink),
                         (QPalette.Base, surface), (QPalette.AlternateBase, paper),
@@ -43,7 +44,9 @@ def apply_theme(app, dark=None):
         QPushButton#primary:disabled {{ background: {line}; color: {muted}; }}
         QFrame#tile {{ background: {surface}; border: 1px solid {line}; }}
         QFrame#tile[active="true"] {{ border-left: 4px solid {magenta}; }}
-        QComboBox, QLineEdit {{ background: {surface}; border: 1px solid {line}; padding: 4px 8px; min-height: 22px; }}
+        QFrame#tile[active="true"][category="image"] {{ border-left-color: {cyan}; }}
+        QComboBox, QLineEdit, QAbstractSpinBox {{ background: {surface}; border: 1px solid {line}; padding: 4px 8px; min-height: 22px; }}
+        QComboBox:disabled, QLineEdit:disabled, QAbstractSpinBox:disabled, QCheckBox:disabled {{ color: {muted}; background: {paper}; }}
         QComboBox QAbstractItemView {{ background: {surface}; color: {ink}; selection-background-color: {magenta}; }}
         QListView {{ background: {surface}; border: 1px solid {line}; outline: 0; }}
         QListView::item {{ padding: 8px; border-bottom: 1px solid {line}; }}

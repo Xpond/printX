@@ -17,13 +17,15 @@ def job_loop(commands, events, answers, cancel):
             return
         paths, options = command
         try:
-            from core.pdf_tools import make_pdf
-            outputs = make_pdf(paths, options, progress, cancel)
-            events.put(('done', outputs))
+            if options.get('tool') == 'upscale':
+                from core.upscale import upscale as job
+            else:
+                from core.pdf_tools import make_pdf as job
+            events.put(('done', job(paths, options, progress, cancel)))
         except Cancelled:
             events.put(('cancelled', None))
         except Exception as error:
-            logging.exception('PDF job failed')
+            logging.exception('Job failed')
             events.put(('failed', error_code(error)))
 
 

@@ -1,9 +1,11 @@
 import time
 from pathlib import Path
+import pytest
+from PIL import Image
 from PySide6.QtCore import QModelIndex, QSettings, QTimer, Qt
 from PySide6.QtGui import QFontMetrics
 from PySide6.QtWidgets import QApplication, QFileDialog
-from ui.tiles import TILE, two_lines
+from ui.tiles import BADGE, TILE, two_lines
 from ui.window import Window
 
 
@@ -126,3 +128,68 @@ def test_long_names_wrap_after_a_separator(qapp):
     width = metrics.horizontalAdvance('customer-order-1-fin')
     assert two_lines('customer-order-1-final-version.jpg', metrics, width) == ['customer-order-1-', 'final-version.jpg']
     assert two_lines('short.jpg', metrics, width) == ['short.jpg']
+
+
+def test_upscale_badges_follow_the_options(qtbot, tmp_path, photo, monkeypatch):
+    settings = QSettings(str(tmp_path / 'settings.ini'), QSettings.Format.IniFormat)
+    settings.setValue('units', 'cm')
+    window = Window(settings)
+    qtbot.addWidget(window)
+    window.show()
+    window.home.selected.emit('upscale')
+    screen = window.upscale
+    assert window.stack.currentWidget() == screen and not screen.sort.isVisibleTo(screen)
+    screen.add_files([str(photo)])
+    qtbot.waitUntil(lambda: bool(screen.sizes()), timeout=10000)
+    index = screen.model.index(0)
+    screen.paper.setCurrentIndex(screen.paper.findData('A4'))
+    assert index.data(BADGE) == ('5.8× · soft', 'blurry') and not screen.warning.isHidden()
+    screen.size.setCurrentIndex(screen.size.findData('2'))
+    assert index.data(BADGE) == ('2× · sharp', 'sharp') and screen.warning.isHidden()
+    assert not screen.paper.isEnabled()
+    screen.hard.setChecked(True)
+    assert not screen.sharpen.isEnabled()
+    screen.hard.setChecked(False)
+    screen.size.setCurrentIndex(screen.size.findData('fit'))
+    screen.paper.setCurrentIndex(screen.paper.findData('A6'))
+    screen.dpi.setCurrentIndex(screen.dpi.findData(150))
+    assert index.data(BADGE) == ('1.5× · sharp', 'sharp')
+    assert index.data().endswith('Sharp to 10 × 6.8 cm')
+    screen.paper.setCurrentIndex(screen.paper.findData('custom'))
+    screen.custom[0].setValue(5)
+    screen.custom[1].setValue(5)
+    assert index.data(BADGE) == ('Already big enough', 'big')
+    started = {}
+    monkeypatch.setattr(screen.jobs, 'start', lambda paths, options: started.update(options))
+    screen.start()
+    assert started['tool'] == 'upscale' and started['paper'] == pytest.approx((5 / 2.54, 5 / 2.54))
+    assert settings.value('upscale/paper') == 'custom' and settings.value('upscale/dpi', type=int) == 150
+
+
+def test_upscale_runs_in_the_worker_and_cancels(qtbot, tmp_path, photo):
+    window = Window(QSettings(str(tmp_path / 'settings.ini'), QSettings.Format.IniFormat))
+    qtbot.addWidget(window)
+    window.show()
+    window.show_screen(window.upscale)
+    screen = window.upscale
+    screen.size.setCurrentIndex(screen.size.findData('2'))
+    screen.add_files([str(photo)])
+    screen.start()
+    qtbot.waitUntil(lambda: not screen.jobs.busy, timeout=30000)
+    output = Path(screen.outputs.currentData())
+    assert output.name == f'{photo.stem}_upscaled.jpg'
+    with Image.open(output) as result:
+        assert result.size == (1200, 800)
+    big = tmp_path / 'big.jpg'
+    Image.effect_noise((2000, 1500), 60).convert('RGB').save(big)
+    screen.reset()
+    screen.size.setCurrentIndex(screen.size.findData('4'))
+    screen.add_files([str(big)])
+    screen.start()
+    qtbot.wait(150)
+    started = time.monotonic()
+    screen.cancel_job()
+    qtbot.waitUntil(lambda: not screen.jobs.busy, timeout=3000)
+    assert time.monotonic() - started < 1
+    assert not list(tmp_path.glob('big_upscaled*')) and not list(tmp_path.rglob('.printshop-*'))
+    window.close()

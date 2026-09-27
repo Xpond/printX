@@ -20,6 +20,8 @@ def thumbnail(path):
         from core.images import pillow_open
         with pillow_open(path) as image:
             size = image.size
+            if image.getexif().get(0x0112) in (5, 6, 7, 8):  # Report the upright size of rotated photos.
+                size = size[::-1]
             image.draft('RGB', (SIZE, SIZE))
             image.thumbnail((SIZE, SIZE))
             image = ImageOps.exif_transpose(image).convert('RGBA')

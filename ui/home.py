@@ -8,7 +8,7 @@ from ui.widgets import button, label
 class Home(QWidget):
     selected = Signal(str)
 
-    def __init__(self):
+    def __init__(self, ready):
         super().__init__()
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 12, 0, 0)
@@ -22,21 +22,22 @@ class Home(QWidget):
         for i, (key, title, description, category) in enumerate(T.TOOLS):
             tile = QFrame()
             tile.setObjectName('tile')
-            tile.setProperty('active', key == 'make')
-            if key == 'make':
-                tile.mouseReleaseEvent = lambda event: self.selected.emit('make')
+            tile.setProperty('active', key in ready)
+            tile.setProperty('category', category)
+            if key in ready:
+                tile.mouseReleaseEvent = lambda event, value=key: self.selected.emit(value)
             box = QVBoxLayout(tile)
             box.setContentsMargins(18, 12, 18, 12)
             row = QHBoxLayout()
             row.addWidget(ToolIcon(key, category))
             pick = button(title, lambda checked=False, value=key: self.selected.emit(value))
-            pick.setEnabled(key == 'make')
-            if key != 'make':
+            pick.setEnabled(key in ready)
+            if key not in ready:
                 pick.setToolTip(T.LATER)
             row.addWidget(pick, 1)
             box.addLayout(row)
             box.addWidget(label(description, muted=True))
-            if key != 'make':
+            if key not in ready:
                 box.addWidget(label(T.LATER, muted=True))
             else:
                 box.addStretch()
