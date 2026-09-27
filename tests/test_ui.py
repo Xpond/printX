@@ -5,6 +5,7 @@ from PIL import Image
 from PySide6.QtCore import QModelIndex, QSettings, QTimer, Qt
 from PySide6.QtGui import QFontMetrics
 from PySide6.QtWidgets import QApplication, QFileDialog
+from ui.compress import size_text
 from ui.tiles import BADGE, TILE, two_lines
 from ui.window import Window
 
@@ -192,4 +193,55 @@ def test_upscale_runs_in_the_worker_and_cancels(qtbot, tmp_path, photo):
     qtbot.waitUntil(lambda: not screen.jobs.busy, timeout=3000)
     assert time.monotonic() - started < 1
     assert not list(tmp_path.glob('big_upscaled*')) and not list(tmp_path.rglob('.printshop-*'))
+    window.close()
+
+
+def test_compress_shows_sizes_savings_and_cancels(qtbot, tmp_path, pdf, photo_pdf):
+    settings = QSettings(str(tmp_path / 'settings.ini'), QSettings.Format.IniFormat)
+    window = Window(settings)
+    qtbot.addWidget(window)
+    window.show()
+    window.home.selected.emit('compress')
+    screen = window.compress
+    big = photo_pdf()
+    screen.add_files([str(big), str(pdf)])
+    first, second = screen.model.index(0), screen.model.index(1)
+    assert first.data().endswith(size_text(big.stat().st_size)) and first.data(BADGE) is None
+    screen.level.setCurrentIndex(screen.level.findData('print'))
+    screen.start()
+    qtbot.waitUntil(lambda: not screen.jobs.busy, timeout=30000)
+    assert ' → ' in first.data() and first.data(BADGE)[0].endswith('% smaller')
+    assert second.data(BADGE) == ('Already optimized', 'big')
+    assert screen.status.text().startswith('Compressed 1 PDF · ') and screen.outputs.count() == 1
+    assert settings.value('compress/level') == 'print'
+    screen.reset()
+    screen.add_files([str(photo_pdf('long.pdf', pages=12))])
+    screen.start()
+    qtbot.waitUntil(lambda: screen.progress.value() > 0, timeout=10000)  # Ghostscript is past page 1.
+    started = time.monotonic()
+    screen.cancel_job()
+    qtbot.waitUntil(lambda: not screen.jobs.busy, timeout=3000)
+    assert time.monotonic() - started < 1
+    assert not list(tmp_path.glob('long_compressed*')) and not list(tmp_path.rglob('.printshop-*'))
+    window.close()
+
+
+def test_split_checks_ranges_and_saves_a_folder(qtbot, tmp_path, pdf):
+    settings = QSettings(str(tmp_path / 'settings.ini'), QSettings.Format.IniFormat)
+    window = Window(settings)
+    qtbot.addWidget(window)
+    window.show()
+    window.home.selected.emit('split')
+    screen = window.split
+    screen.add_files([str(pdf)])
+    assert screen.run.isEnabled() and not screen.ranges.isVisible() and not screen.every.isVisible()
+    screen.mode.setCurrentIndex(screen.mode.findData('ranges'))
+    assert screen.ranges.isVisible() and not screen.run.isEnabled()  # Nothing typed yet.
+    screen.ranges.setText('1-2, 3')
+    assert screen.run.isEnabled()
+    screen.start()
+    qtbot.waitUntil(lambda: not screen.jobs.busy, timeout=30000)
+    assert screen.status.text() == 'Split 1 PDF into 2 PDFs'
+    assert Path(screen.outputs.currentData()).name == 'original_split' and screen.open_button.text() == 'Open folder'
+    assert settings.value('split/mode') == 'ranges' and settings.value('split/ranges') == '1-2, 3'
     window.close()

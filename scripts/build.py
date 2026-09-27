@@ -12,5 +12,6 @@ command = [sys.executable, '-m', 'PyInstaller', '--noconfirm', '--clean', '--one
            '--exclude-module', 'PySide6.QtMultimedia', '--exclude-module', 'tkinter',
            '--exclude-module', 'pytest', '--exclude-module', 'docx', '--exclude-module', 'vtracer']
 if sys.platform == 'win32':
-    command += ['--manifest', 'assets/windows.manifest']
+    command += ['--manifest', 'assets/windows.manifest', '--add-binary', 'vendor/ghostscript/gsdll64.dll:.',
+                '--add-data', 'vendor/ghostscript/COPYING:ghostscript']
 subprocess.run(command + ['app.py'], cwd=root, check=True)

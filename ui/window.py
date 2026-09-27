@@ -3,9 +3,11 @@ from PySide6.QtCore import QSettings, QTimer
 from PySide6.QtGui import QIcon, QKeySequence, QShortcut
 from PySide6.QtWidgets import QHBoxLayout, QMainWindow, QMessageBox, QScrollArea, QStackedWidget, QVBoxLayout, QWidget
 from ui import text as T
+from ui.compress import Compress
 from ui.home import Home
 from ui.make_pdf import MakePdf
 from ui.settings import Settings
+from ui.split import Split
 from ui.upscale import Upscale
 from ui.widgets import button, label
 
@@ -39,7 +41,9 @@ class Window(QMainWindow):
         layout.addWidget(self.stack, 1)
         self.upscale = Upscale(self.settings)
         self.make = MakePdf(self.settings)
-        self.tools = {'upscale': self.upscale, 'make': self.make}
+        self.compress = Compress(self.settings)
+        self.split = Split(self.settings)
+        self.tools = {'upscale': self.upscale, 'make': self.make, 'compress': self.compress, 'split': self.split}
         self.home = Home(self.tools)
         self.preferences = Settings(self.settings)
         for widget in (self.home, *self.tools.values(), self.preferences):

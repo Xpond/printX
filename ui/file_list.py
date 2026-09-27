@@ -18,7 +18,7 @@ class FileModel(QAbstractListModel):
         self.cache = {}  # Path: (thumbnail, detail, pixel size or None)
         self.blank = square()
         self.tile = TILE
-        self.describe = None  # Optional (width, height) -> (extra line, badge) for images.
+        self.describe = None  # Optional (path, pixel size or None) -> (extra line, badge) or None.
         self.thumbnails = Thumbnails(self)
         self.thumbnails.ready.connect(self.thumbnail_ready)
 
@@ -38,7 +38,7 @@ class FileModel(QAbstractListModel):
         if path not in self.cache:
             self.thumbnails.request(path)
         pixmap, detail, size = self.cache.get(path, (self.blank, T.READING, None))
-        extra = self.describe(size) if self.describe and size else None
+        extra = self.describe(path, size) if self.describe else None
         if role == BADGE:
             return extra and extra[1]
         if role == Qt.ItemDataRole.DecorationRole:
