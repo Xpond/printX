@@ -7,6 +7,8 @@ if not exist .venv\Scripts\python.exe (
 )
 .venv\Scripts\python.exe -m pip install --only-binary=:all: -r requirements-dev.txt
 if errorlevel 1 goto fail
+.venv\Scripts\python.exe scripts\ghostscript.py
+if errorlevel 1 goto fail
 .venv\Scripts\python.exe -m pytest -q
 if errorlevel 1 goto fail
 .venv\Scripts\python.exe scripts\build.py

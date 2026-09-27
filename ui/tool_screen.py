@@ -93,6 +93,13 @@ class ToolScreen(QWidget):
         """Last chance for a tool to stop a job before it starts."""
         return True
 
+    def update_hint(self):
+        folder = self.settings.value('output_folder', '')
+        self.output_hint.setText(T.SAVED_FIXED.format(folder=folder) if folder else self.words.get('saved', T.SAVED_EACH))
+
+    def refresh_settings(self):
+        self.update_hint()
+
     def browse(self):
         paths, _ = QFileDialog.getOpenFileNames(self, self.words['browse'], '', self.words['filter'])
         if paths:

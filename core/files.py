@@ -1,5 +1,7 @@
+import logging
 import os
 import re
+import shutil
 from pathlib import Path
 
 IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.tif', '.tiff', '.bmp', '.webp', '.heic', '.heif'}
@@ -37,6 +39,38 @@ def stage_directory(directory, token):
     return Path(directory) / f'.printshop-{token}'
 
 
+def staging(path, options):
+    """This job's private folder beside the file's output, where results are finished before publishing."""
+    stage = stage_directory(output_directory(path, options), options['token'])
+    stage.mkdir(parents=True, exist_ok=True)
+    return stage
+
+
+def each_file(paths, options, progress, cancel, one):
+    """Run one(index, path) on each file in turn, skipping failures with a message; always removes staging."""
+    outputs = []
+    try:
+        for index, value in enumerate(paths):
+            check_cancel(cancel)
+            path = Path(value)
+            progress('progress', {'index': index, 'total': len(paths), 'path': str(path)})
+            try:
+                outputs.append(one(index, path))
+            except Cancelled:
+                raise
+            except Exception as error:
+                if not isinstance(error, JobError):
+                    logging.exception('Could not process %s', path)
+                progress('skipped', {'path': str(path), 'code': error_code(error)})
+            progress('progress', {'index': index + 1, 'total': len(paths), 'path': str(path)})
+        if not outputs:
+            raise JobError('no_outputs')
+        return outputs
+    finally:
+        for stage in {stage_directory(output_directory(path, options), options['token']) for path in paths}:
+            shutil.rmtree(stage, ignore_errors=True)
+
+
 def publish(temp, destination):
     """Publish a complete file atomically without replacing an existing name."""
     destination = Path(destination)
@@ -51,6 +85,16 @@ def publish(temp, destination):
             return str(target)
         except FileExistsError:
             continue
+    raise JobError('names_exhausted')
+
+
+def publish_folder(temp, destination):
+    """Publish a finished folder under a name not yet taken; only another app racing for it could clash."""
+    for number in range(1, 100000):
+        target = Path(destination if number == 1 else f'{destination} ({number})')
+        if not target.exists():
+            os.rename(temp, target)
+            return str(target)
     raise JobError('names_exhausted')
 
 

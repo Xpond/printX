@@ -6,7 +6,7 @@ import pymupdf
 import pytest
 from PIL import Image
 from core.files import Cancelled, JobError, publish
-from core.pdf_tools import make_pdf
+from core.pdf_tools import make_pdf, page_ranges, split_pdf
 
 
 def run(paths, **options):
@@ -142,3 +142,53 @@ def test_long_paths(photo, tmp_path):
     output, = run([photo], output_folder=str(folder))
     assert len(output) > 260
     assert Path(output).exists()
+
+
+def split(path, **options):
+    events = []
+    outputs = split_pdf([path], {'token': uuid.uuid4().hex, **options}, lambda *event: events.append(event),
+                        threading.Event())
+    return Path(outputs[0]), events
+
+
+def test_page_ranges():
+    assert page_ranges('1-3, 5,8 – 10,') == [(1, 3), (5, 5), (8, 10)]
+    assert all(page_ranges(text) is None for text in ('', ' , ', '0', '3-1', '1-', 'a', '1;2'))
+
+
+def test_split_every_page_ranges_and_groups(pdf, tmp_path):
+    folder, events = split(pdf, mode='pages')
+    assert folder.name == 'original_split' and folder.parent == tmp_path
+    assert sorted(p.name for p in folder.iterdir()) == [f'original_page_{i}.pdf' for i in (1, 2, 3)]
+    with pymupdf.open(folder / 'original_page_2.pdf') as doc:
+        assert doc.page_count == 1 and 'Original page 2' in doc[0].get_text() and doc[0].rotation == 90
+    assert ('output', {'path': str(folder), 'parts': 3}) in events
+    folder, _ = split(pdf, mode='ranges', ranges='3, 1-2')
+    assert folder.name == 'original_split (2)'
+    with pymupdf.open(folder / 'original_pages_1-2.pdf') as doc:
+        assert doc.page_count == 2
+    long = tmp_path / 'long.pdf'
+    with pymupdf.open() as doc:
+        for _ in range(12):
+            doc.new_page()
+        doc.save(long)
+    folder, _ = split(long, mode='every', every=5)
+    assert sorted(p.name for p in folder.iterdir()) == ['long_pages_01-05.pdf', 'long_pages_06-10.pdf',
+                                                        'long_pages_11-12.pdf']
+    assert not list(tmp_path.glob('.printshop-*'))
+
+
+def test_split_skips_missing_pages_and_cancels_cleanly(pdf, tmp_path):
+    events = []
+    with pytest.raises(JobError, match='no_outputs'):
+        split_pdf([pdf], {'token': 'pages', 'mode': 'ranges', 'ranges': '2-4'}, lambda *event: events.append(event),
+                  threading.Event())
+    assert [data['code'] for kind, data in events if kind == 'skipped'] == ['missing_pages']
+    flag = threading.Event()
+
+    def progress(kind, data):
+        if kind == 'progress' and 0 < data['index'] < 1:
+            flag.set()  # Cancel after the first part is saved.
+    with pytest.raises(Cancelled):
+        split_pdf([pdf], {'token': 'cancel', 'mode': 'pages'}, progress, flag)
+    assert not list(tmp_path.glob('original_split*')) and not list(tmp_path.glob('.printshop-*'))

@@ -30,6 +30,17 @@ UPSCALE = {
     'run_empty': 'Upscale images', 'run': 'Upscale {count} images', 'run_one': 'Upscale 1 image',
     'running': 'Upscaling…', 'progress': 'Upscaling · {index} of {total}',  # Files run in parallel.
     'finishing': 'Finishing…', 'success': 'Upscaled {count} images', 'success_one': 'Upscaled 1 image'}
+PDFS = {'browse': 'Choose PDFs', 'filter': 'PDFs (*.pdf)', 'empty': 'Drop PDFs here, or click to choose files',
+        'count': '{count} PDFs', 'count_one': '1 PDF', 'finishing': 'Finishing…'}
+COMPRESS = {
+    **PDFS, 'title': 'Compress PDF', 'run_empty': 'Compress PDFs', 'run': 'Compress {count} PDFs',
+    'run_one': 'Compress 1 PDF', 'running': 'Compressing…', 'progress': 'Compressing {name} · {index} of {total}',
+    'success': 'Compressed {count} PDFs', 'success_one': 'Compressed 1 PDF'}
+SPLIT = {
+    **PDFS, 'title': 'Split PDF', 'run_empty': 'Split PDFs', 'run': 'Split {count} PDFs', 'run_one': 'Split 1 PDF',
+    'running': 'Splitting…', 'progress': 'Splitting {name} · {index} of {total}',
+    'success': 'Split {count} PDFs', 'success_one': 'Split 1 PDF',
+    'saved': 'Saves a folder next to each original. Existing files are kept.'}
 ADD = 'Add files'
 REMOVE = 'Remove selected'
 SELECT_ALL = 'Select all'
@@ -71,10 +82,28 @@ HUGE_TITLE = 'Very large result'
 HUGE = 'The largest result will be about {megapixels} megapixels. It needs a lot of memory and disk space.'
 HUGE_YES = 'Upscale anyway'
 HUGE_NO = 'Go back'
+COMPRESSION = 'Compression'
+LEVELS = [('Smallest (email)', 'smallest'), ('Recommended', 'recommended'), ('Print quality', 'print')]
+LEVEL_NOTES = {'smallest': 'The smallest file, for email. Images at 100 DPI.',
+               'recommended': 'Sharp on screen and office printers. Images at 150 DPI.',
+               'print': 'For professional printing. Images at 300 DPI, CMYK colours kept.'}
+SHRUNK = '{before} → {after}'
+SMALLER = '{percent}% smaller'
+TOTAL = '{status} · {before} → {after}, {percent}% smaller'
+OPTIMIZED = 'Already optimized'
+SPLIT_BY = 'Split'
+SPLIT_MODES = [('Every page', 'pages'), ('Page ranges', 'ranges'), ('Every N pages', 'every')]
+SPLIT_NOTES = {'pages': 'Each page becomes its own PDF.', 'ranges': 'Each range becomes one PDF.',
+               'every': 'Each group becomes one PDF.'}
+RANGES_EXAMPLE = '1-3, 5, 8-10'
+RANGES_HELP = 'Type pages like 1-3, 5, 8-10.'
+PAGES_PER_PDF = ' pages per PDF'
+PARTS = '{status} into {count} PDFs'
 CANCEL = 'Cancel'
 CANCELLING = 'Cancelling…'
 CANCELLED = 'Cancelled. Unfinished files were removed.'
 OPEN = 'Open file'
+OPEN_FOLDER = 'Open folder'
 SHOW = 'Show in folder'
 AGAIN = 'Do another'
 SAVED_NEXT = 'Saves next to the first original. Existing files are kept.'
@@ -95,6 +124,9 @@ ERRORS = {
     'no_outputs': 'Nothing was saved. Check the messages above and try again.',
     'big_enough': 'It is already big enough for this print size, so it was left as it is.',
     'not_image': 'Choose a JPG, PNG, TIFF, BMP, WEBP or HEIC image.',
+    'not_pdf': 'Choose a PDF file.',
+    'optimized': 'It is already optimized, so it was left as it is.',
+    'missing_pages': 'This PDF does not have all the pages you typed. Check its page count.',
     'memory': 'There is not enough memory for a result this big. Choose a smaller size or close other apps.',
     'names_exhausted': 'Too many files have this name. Choose another output folder.',
     'worker': 'Processing stopped unexpectedly. Try fewer files; details were saved to the log.',

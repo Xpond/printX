@@ -97,8 +97,10 @@ class Upscale(ToolScreen):
         """Pixel sizes of the images whose previews have loaded."""
         return [entry[2] for entry in map(self.model.cache.get, self.model.paths) if entry and entry[2]]
 
-    def describe(self, size):
+    def describe(self, path, size):
         """The print size an image is sharp at, and a badge for how it will look once upscaled."""
+        if not size:
+            return None
         options = self.current()
         scale = factor(size, options)
         level = grade(scale, options['hard'])
@@ -134,10 +136,6 @@ class Upscale(ToolScreen):
         box.addButton(T.HUGE_NO, QMessageBox.ButtonRole.RejectRole)
         box.exec()
         return box.clickedButton() == upscale
-
-    def update_hint(self):
-        folder = self.settings.value('output_folder', '')
-        self.output_hint.setText(T.SAVED_FIXED.format(folder=folder) if folder else T.SAVED_EACH)
 
     def refresh_settings(self):
         inches = self.custom_inches()

@@ -19,6 +19,10 @@ def job_loop(commands, events, answers, cancel):
         try:
             if options.get('tool') == 'upscale':
                 from core.upscale import upscale as job
+            elif options.get('tool') == 'compress':
+                from core.compress import compress as job
+            elif options.get('tool') == 'split':
+                from core.pdf_tools import split_pdf as job
             else:
                 from core.pdf_tools import make_pdf as job
             events.put(('done', job(paths, options, progress, cancel)))

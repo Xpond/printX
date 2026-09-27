@@ -1,5 +1,6 @@
 import os
 import sys
+from io import BytesIO
 from pathlib import Path
 
 os.environ['QT_QPA_PLATFORM'] = 'offscreen'
@@ -34,3 +35,18 @@ def pdf(tmp_path):
         doc[1].set_rotation(90)
         doc.save(path)
     return path
+
+
+@pytest.fixture
+def photo_pdf(tmp_path):
+    """Make PDFs of noisy 3000 × 2000 photos on A6 pages: about 500 DPI, so every level shrinks them."""
+    def make(name='scan 🖨.pdf', mode='RGB', pages=2):
+        data = BytesIO()
+        Image.effect_noise((3000, 2000), 40).convert(mode).save(data, 'JPEG', quality=95)
+        with pymupdf.open() as doc:
+            for _ in range(pages):
+                page = doc.new_page(width=420, height=298)
+                page.insert_image(page.rect, stream=data.getvalue())
+            doc.save(tmp_path / name)
+        return tmp_path / name
+    return make
