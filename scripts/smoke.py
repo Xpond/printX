@@ -54,12 +54,33 @@ def run_smoke(app, window, destination):
             assert doc.page_count == 1
             assert doc.extract_image(doc[0].get_images()[0][0])['image'] == source.read_bytes()
         snapshot('06-success-light')
+        window.show_screen(window.upscale)
+        window.upscale.add_files([str(source)])
+        QTimer.singleShot(800, upscale)
+
+    def upscale():
+        snapshot('07-upscale-files-light')
+        window.upscale.start()
+
+    def upscaled(kind, data):
+        if kind == 'done':
+            QTimer.singleShot(100, finish)
+        elif kind == 'failed':
+            finished(kind, data)
+
+    def finish():
+        output = window.upscale.outputs.currentData()
+        with Image.open(output) as image:
+            assert image.width > 3000 and round(image.info['dpi'][0]) == 300
+        snapshot('08-upscale-done-light')
         apply_theme(app, True)
-        snapshot('07-success-dark')
+        snapshot('09-upscale-done-dark')
+        window.show_screen(window.make)
+        snapshot('10-success-dark')
         window.show_screen(window.home)
-        snapshot('08-home-dark')
+        snapshot('11-home-dark')
         window.show_screen(window.preferences)
-        snapshot('09-settings-dark')
+        snapshot('12-settings-dark')
         report = {'passed': True, 'output': output, 'heartbeat_count': len(beats),
                   'max_heartbeat_gap_seconds': max((b - a for a, b in zip(beats, beats[1:])), default=0),
                   'elapsed_seconds': time.monotonic() - started}
@@ -69,10 +90,12 @@ def run_smoke(app, window, destination):
 
     def timeout():
         (destination / 'timeout.txt').write_text('GUI smoke test exceeded 60 seconds.')
-        window.make.jobs.shutdown()
-        window.make.model.thumbnails.shutdown()
+        for tool in window.tools.values():
+            tool.jobs.shutdown()
+            tool.model.thumbnails.shutdown()
         app.exit(1)
 
     window.make.jobs.event.connect(finished)
+    window.upscale.jobs.event.connect(upscaled)
     QTimer.singleShot(0, prepare)
     QTimer.singleShot(60000, timeout)

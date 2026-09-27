@@ -1,10 +1,11 @@
 """Generate small, repeatable fixtures for manual VM testing."""
 import math
+import random
 from pathlib import Path
 
 
 def generate(directory):
-    from PIL import Image, ImageDraw
+    from PIL import Image, ImageDraw, ImageOps
     import pymupdf
     from docx import Document
     directory = Path(directory)
@@ -37,6 +38,16 @@ def generate(directory):
     doc.add_heading('PrintShop sample document', 0)
     doc.add_paragraph('Office conversion arrives in phase 4. This file tests the current unsupported-file message.')
     doc.save(directory / '07 office sample.docx')
+    modules, pick = Image.new('1', (29, 29), 1), random.Random(8)
+    for y in range(29):
+        for x in range(29):
+            modules.putpixel((x, y), pick.random() < .5)
+    draw = ImageDraw.Draw(modules)
+    for x, y in ((0, 0), (22, 0), (0, 22)):  # Corner squares like a QR code; it does not scan.
+        draw.rectangle((x, y, x + 6, y + 6), fill=0)
+        draw.rectangle((x + 1, y + 1, x + 5, y + 5), fill=1)
+        draw.rectangle((x + 2, y + 2, x + 4, y + 4), fill=0)
+    ImageOps.expand(modules, 4, fill=1).resize((148, 148), Image.NEAREST).save(directory / '08 qr-style code.png')
 
 
 if __name__ == '__main__':

@@ -57,6 +57,8 @@ def publish(temp, destination):
 def error_code(error):
     if isinstance(error, JobError):
         return error.code
+    if isinstance(error, MemoryError):
+        return 'memory'
     if isinstance(error, PermissionError):
         return 'permission'
     if isinstance(error, FileNotFoundError):
