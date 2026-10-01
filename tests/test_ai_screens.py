@@ -1,9 +1,13 @@
+import sys
+
+import pytest
 from PIL import Image
-from PySide6.QtCore import QSettings
+from PySide6.QtCore import QSettings, Qt
 from PySide6.QtWidgets import QLabel, QLineEdit
 from core.openrouter import MODELS
 from core.secret import seal, unseal
 from ui import text as T
+from ui.settings import Settings
 from ui.window import Window
 
 
@@ -12,18 +16,19 @@ def test_api_key_is_write_only_and_models_follow_the_defaults(qtbot, tmp_path):
     window = Window(settings)
     qtbot.addWidget(window)
     page = window.preferences
-    assert page.key.echoMode() == QLineEdit.EchoMode.Password and page.key_note.text() == T.KEY_MISSING
+    assert page.key.echoMode() == QLineEdit.EchoMode.Password and page.key.placeholderText() == T.KEY_HINT
     page.key.setText(' sk-or-v1-secret ')
     page.models['enhance'].setText('meta/muse-image-2')
     page.save()
-    assert page.key.text() == '' and page.key_note.text() == T.KEY_SAVED
+    assert page.key.text() == '' and page.key.placeholderText() == T.KEY_SAVED  # The empty box says so.
+    assert page.message.text() == T.SETTINGS_SAVED
     assert unseal(settings.value('ai/key')) == 'sk-or-v1-secret'
     assert settings.value('ai/remove_model') == '' and settings.value('ai/enhance_model') == 'meta/muse-image-2'
     page.save()  # Saving again without a new key keeps the old one.
     assert unseal(settings.value('ai/key')) == 'sk-or-v1-secret'
     reopened = Window(settings)
     qtbot.addWidget(reopened)
-    assert reopened.preferences.key.text() == '' and reopened.preferences.key_note.text() == T.KEY_SAVED
+    assert reopened.preferences.key.text() == '' and reopened.preferences.key.placeholderText() == T.KEY_SAVED
     assert reopened.preferences.models['remove'].text() == MODELS['remove']
 
 
@@ -42,11 +47,11 @@ def test_remove_needs_a_key_and_a_description(qtbot, tmp_path, photo, monkeypatc
     assert screen.run.isEnabled() and screen.run.text() == 'Remove background from 1 image'
     screen.mode.setCurrentIndex(screen.mode.findData('object'))
     assert screen.target.isVisible() and not screen.keep.isVisible() and not screen.run.isEnabled()
-    screen.target.setText('the watermark')
+    screen.target.setPlainText('the watermark')
     assert screen.run.isEnabled() and screen.run.text() == 'Remove it from 1 image'
     started = {}
     monkeypatch.setattr(screen.jobs, 'start', lambda paths, options: started.update(options))
-    screen.start()
+    qtbot.keyClick(screen.target, Qt.Key.Key_Return)  # Enter runs it.
     assert started['tool'] == 'remove' and started['mode'] == 'object' and started['what'] == 'the watermark'
     assert started['key'] == 'sk-or-v1-secret' and started['model'] == MODELS['remove']
     assert settings.value('remove/mode') == 'object' and settings.value('remove/target') == 'the watermark'
@@ -68,7 +73,7 @@ def test_enhance_is_a_conversation_about_one_photo(qtbot, tmp_path, photo, monke
     assert screen.model.paths == [str(photo)]
     qtbot.waitUntil(lambda: caption.text().endswith('600 × 400 px'), timeout=10000)  # Its preview loaded.
     assert not image.pixmap().isNull() and image.property('current')
-    screen.prompt.setText('Make it sharp')
+    screen.prompt.setPlainText('Make it sharp')
     started = {}
 
     def begin(paths, options):
@@ -76,10 +81,14 @@ def test_enhance_is_a_conversation_about_one_photo(qtbot, tmp_path, photo, monke
         screen.jobs.busy = True
 
     monkeypatch.setattr(screen.jobs, 'start', begin)
-    screen.start()
-    assert started['paths'] == [str(photo)] and started['prompt'] == 'Make it sharp'
+    screen.prompt.moveCursor(screen.prompt.textCursor().MoveOperation.End)
+    qtbot.keyClick(screen.prompt, Qt.Key.Key_Return, Qt.KeyboardModifier.ShiftModifier)  # A new line, not sent.
+    qtbot.keyClicks(screen.prompt, 'for printing')
+    assert not started
+    qtbot.keyClick(screen.prompt, Qt.Key.Key_Return)
+    assert started['paths'] == [str(photo)] and started['prompt'] == 'Make it sharp\nfor printing'
     assert started['original'] == str(photo) and started['key'] == 'sk-or-v1-secret'
-    assert started['model'] == MODELS['enhance'] and screen.prompt.text() == '' and screen.progress.maximum() == 0
+    assert started['model'] == MODELS['enhance'] and not screen.prompt.toPlainText() and screen.progress.maximum() == 0
     version = tmp_path / 'café photo 🖨_enhanced.jpg'
     Image.new('RGB', (900, 600)).save(version)
     screen.on_event('output', {'path': str(version)})
@@ -92,3 +101,18 @@ def test_enhance_is_a_conversation_about_one_photo(qtbot, tmp_path, photo, monke
     assert screen.model.paths == [str(photo)] and not screen.chat.pictures[str(version)][0].property('current')
     screen.again.click()
     assert screen.model.paths == [] and not screen.chat.pictures
+
+
+@pytest.mark.skipif(sys.platform != 'win32', reason='The installed app keeps settings in the Windows registry.')
+def test_key_survives_the_windows_registry(qtbot):
+    settings = QSettings('PrintShop Tools tests', 'Registry')  # The same storage as the installed app.
+    settings.clear()
+    page = Settings(settings)
+    qtbot.addWidget(page)
+    page.key.setText('sk-or-v1-secret')
+    page.save()
+    try:
+        assert unseal(QSettings('PrintShop Tools tests', 'Registry').value('ai/key')) == 'sk-or-v1-secret'
+    finally:
+        settings.clear()
+        settings.sync()

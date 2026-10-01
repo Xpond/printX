@@ -1,7 +1,27 @@
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QPlainTextEdit
 from core.openrouter import MODELS
 from core.secret import unseal
 from ui import text as T
 from ui.tool_screen import ToolScreen
+
+
+class Prompt(QPlainTextEdit):
+    """Room to tell the AI what to do: Enter runs it, Shift+Enter starts a new line."""
+    submitted = Signal()
+
+    def __init__(self, hint, text=''):
+        super().__init__(text)
+        self.setPlaceholderText(hint)
+        self.setTabChangesFocus(True)
+        self.setMinimumHeight(4 * self.fontMetrics().lineSpacing() + 16)
+
+    def keyPressEvent(self, event):
+        if (event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter)
+                and not event.modifiers() & Qt.KeyboardModifier.ShiftModifier):
+            self.submitted.emit()
+        else:
+            super().keyPressEvent(event)
 
 
 class AiTool(ToolScreen):

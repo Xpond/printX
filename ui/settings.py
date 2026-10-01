@@ -1,4 +1,5 @@
-from PySide6.QtCore import QLocale, Qt, Signal
+import logging
+from PySide6.QtCore import QLocale, Signal
 from PySide6.QtWidgets import (QComboBox, QFileDialog, QFormLayout, QHBoxLayout, QLineEdit, QRadioButton,
                                QVBoxLayout, QWidget)
 from core.openrouter import MODELS
@@ -69,8 +70,6 @@ class Settings(QWidget):
         ai.setSpacing(10)
         self.key = QLineEdit()  # Write-only: a saved key is never loaded back, and password fields refuse copying.
         self.key.setEchoMode(QLineEdit.EchoMode.Password)
-        self.key.setPlaceholderText(T.KEY_HINT)
-        self.key_note = label('', muted=True)
         ai.addRow(T.API_KEY, self.key)
         self.models = {}
         for tool, title in T.MODEL_TITLES.items():
@@ -78,12 +77,13 @@ class Settings(QWidget):
             self.models[tool].setPlaceholderText(MODELS[tool])
             ai.addRow(title, self.models[tool])
         layout.addLayout(ai)
-        layout.addWidget(self.key_note)
-        self.show_key_note()
-        self.message = label('')
-        layout.addWidget(self.message)
+        self.show_key_state()
         layout.addStretch()
-        layout.addWidget(button(T.SAVE_SETTINGS, self.save, primary=True), alignment=Qt.AlignmentFlag.AlignRight)
+        bottom = QHBoxLayout()  # The result shows beside the button that was pressed.
+        self.message = label('')
+        bottom.addWidget(self.message, 1)
+        bottom.addWidget(button(T.SAVE_SETTINGS, self.save, primary=True))
+        layout.addLayout(bottom)
 
     def choose_folder(self):
         folder = QFileDialog.getExistingDirectory(self, T.CHOOSE_FOLDER, self.folder.text())
@@ -101,14 +101,16 @@ class Settings(QWidget):
         if self.key.text().strip():
             self.settings.setValue('ai/key', seal(self.key.text().strip()))
             self.key.clear()
+            logging.info('OpenRouter API key saved')
         for tool, field in self.models.items():
             model = field.text().strip() or MODELS[tool]
             field.setText(model)
             self.settings.setValue(f'ai/{tool}_model', '' if model == MODELS[tool] else model)  # Follow new defaults.
-        self.show_key_note()
+        self.show_key_state()
         self.settings.sync()
         self.message.setText(T.SETTINGS_SAVED)
         self.saved.emit()
 
-    def show_key_note(self):
-        self.key_note.setText(T.KEY_SAVED if self.settings.value('ai/key', '') else T.KEY_MISSING)
+    def show_key_state(self):
+        """The empty key box says whether a key is saved, without ever showing it."""
+        self.key.setPlaceholderText(T.KEY_SAVED if self.settings.value('ai/key', '') else T.KEY_HINT)

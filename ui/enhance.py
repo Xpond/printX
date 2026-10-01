@@ -1,8 +1,7 @@
 from pathlib import Path
-from PySide6.QtWidgets import QLineEdit
 from core.files import IMAGE_EXTENSIONS
 from ui import text as T
-from ui.ai_tool import AiTool
+from ui.ai_tool import AiTool, Prompt
 from ui.chat import SIDE, Chat
 
 
@@ -23,9 +22,10 @@ class Enhance(AiTool):
         self.chat.files.connect(self.add_files)
         self.chat.browse.connect(self.browse)
         self.chat.picked.connect(self.pick)
-        self.layout.insertWidget(1, self.chat, 1)
-        self.prompt = QLineEdit()
-        self.prompt.setPlaceholderText(T.PROMPT_HINT)
+        self.layout.insertWidget(1, self.chat, 3)
+        self.layout.setStretchFactor(self.bar, 1)  # A roomy box to write in, under the conversation.
+        self.prompt = Prompt(T.PROMPT_HINT)
+        self.prompt.submitted.connect(self.start)
         self.prompt.textChanged.connect(self.update_count)
         self.options_layout.addWidget(self.prompt)
         self.model.thumbnails.size = 2 * SIDE  # Sharp in the conversation on high-DPI screens.
@@ -33,7 +33,7 @@ class Enhance(AiTool):
         self.update_count()
 
     def ready(self):
-        return super().ready() and bool(self.model.paths) and bool(self.prompt.text().strip())
+        return super().ready() and bool(self.model.paths) and bool(self.prompt.toPlainText().strip())
 
     def add_files(self, paths):
         """A new photo starts a new conversation."""
@@ -58,10 +58,10 @@ class Enhance(AiTool):
             self.chat.select(path)
 
     def job_options(self):
-        return {'prompt': self.prompt.text(), 'original': self.original, **self.ai_options()}
+        return {'prompt': self.prompt.toPlainText(), 'original': self.original, **self.ai_options()}
 
     def start(self):
-        prompt = self.prompt.text().strip()
+        prompt = self.prompt.toPlainText().strip()
         super().start()
         if self.jobs.busy:
             self.chat.say(prompt, mine=True)
