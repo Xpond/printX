@@ -1,5 +1,6 @@
 import base64
 import json
+import sys
 import threading
 import urllib.error
 import urllib.request
@@ -138,5 +139,5 @@ def test_key_is_sealed_at_rest():
     sealed = seal('sk-or-v1-secret')
     assert unseal(sealed) == 'sk-or-v1-secret'
     assert unseal('') == '' and unseal('not base64!') == ''
-    if __import__('sys').platform == 'win32':
+    if sys.platform == 'win32':
         assert b'secret' not in base64.b64decode(sealed)  # Encrypted for this Windows user, not just encoded.

@@ -25,6 +25,8 @@ def job_loop(commands, events, answers, cancel):
                 from core.pdf_tools import split_pdf as job
             elif options.get('tool') == 'remove':
                 from core.remove import remove as job
+            elif options.get('tool') == 'enhance':
+                from core.enhance import enhance as job
             else:
                 from core.pdf_tools import make_pdf as job
             events.put(('done', job(paths, options, progress, cancel)))
@@ -38,7 +40,7 @@ def job_loop(commands, events, answers, cancel):
 def thumbnail_loop(commands, events):
     from core.thumbnails import thumbnail
     while True:
-        path = commands.get()
-        if path is None:
+        command = commands.get()
+        if command is None:
             return
-        events.put((path, thumbnail(path)))
+        events.put((command[0], thumbnail(*command)))

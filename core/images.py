@@ -10,6 +10,19 @@ def pillow_open(path):
     return Image.open(path)
 
 
+def flat_photo(path):
+    """The picture as it looks (upright, RGB, transparency on white), and its DPI and RGB colour profile."""
+    from PIL import Image, ImageOps
+    with pillow_open(path) as source:
+        keep = {key: source.info[key] for key in ('dpi', 'icc_profile') if source.info.get(key)}
+        if source.mode not in ('RGB', 'RGBA'):
+            keep.pop('icc_profile', None)  # A CMYK or grey profile does not describe RGB pixels.
+        image = ImageOps.exif_transpose(source).convert('RGBA')
+    photo = Image.new('RGB', image.size, 'white')
+    photo.paste(image, mask=image.getchannel('A'))
+    return photo, keep
+
+
 def image_pdf(path, options, cancel):
     import img2pdf
     from PIL import Image, ImageOps

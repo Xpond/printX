@@ -120,6 +120,8 @@ def run_smoke(app, window, destination):
         snapshot('17-settings-dark')
         window.show_screen(window.remove)
         snapshot('18-remove-dark')
+        window.show_screen(window.enhance)
+        snapshot('19-enhance-dark')
         report = {'passed': True, 'output': output, 'heartbeat_count': len(beats),
                   'max_heartbeat_gap_seconds': max((b - a for a, b in zip(beats, beats[1:])), default=0),
                   'elapsed_seconds': time.monotonic() - started}

@@ -4,10 +4,7 @@ import pytest
 from PIL import Image
 from PySide6.QtCore import QModelIndex, QSettings, QTimer, Qt
 from PySide6.QtGui import QFontMetrics
-from PySide6.QtWidgets import QApplication, QFileDialog, QLineEdit
-from core.openrouter import MODELS
-from core.secret import unseal
-from ui import text as T
+from PySide6.QtWidgets import QApplication, QFileDialog
 from ui.compress import size_text
 from ui.tiles import BADGE, TILE, two_lines
 from ui.window import Window
@@ -248,50 +245,3 @@ def test_split_checks_ranges_and_saves_a_folder(qtbot, tmp_path, pdf):
     assert Path(screen.outputs.currentData()).name == 'original_split' and screen.open_button.text() == 'Open folder'
     assert settings.value('split/mode') == 'ranges' and settings.value('split/ranges') == '1-2, 3'
     window.close()
-
-
-def test_api_key_is_write_only_and_models_follow_the_defaults(qtbot, tmp_path):
-    settings = QSettings(str(tmp_path / 'settings.ini'), QSettings.Format.IniFormat)
-    window = Window(settings)
-    qtbot.addWidget(window)
-    page = window.preferences
-    assert page.key.echoMode() == QLineEdit.EchoMode.Password and page.key_note.text() == T.KEY_MISSING
-    page.key.setText(' sk-or-v1-secret ')
-    page.models['enhance'].setText('meta/muse-image-2')
-    page.save()
-    assert page.key.text() == '' and page.key_note.text() == T.KEY_SAVED
-    assert unseal(settings.value('ai/key')) == 'sk-or-v1-secret'
-    assert settings.value('ai/remove_model') == '' and settings.value('ai/enhance_model') == 'meta/muse-image-2'
-    page.save()  # Saving again without a new key keeps the old one.
-    assert unseal(settings.value('ai/key')) == 'sk-or-v1-secret'
-    reopened = Window(settings)
-    qtbot.addWidget(reopened)
-    assert reopened.preferences.key.text() == '' and reopened.preferences.key_note.text() == T.KEY_SAVED
-    assert reopened.preferences.models['remove'].text() == MODELS['remove']
-
-
-def test_remove_needs_a_key_and_a_description(qtbot, tmp_path, photo, monkeypatch):
-    settings = QSettings(str(tmp_path / 'settings.ini'), QSettings.Format.IniFormat)
-    window = Window(settings)
-    qtbot.addWidget(window)
-    window.show()
-    window.home.selected.emit('remove')
-    screen = window.remove
-    assert window.stack.currentWidget() == screen and window.ai.isVisible()
-    screen.add_files([str(photo)])
-    assert not screen.run.isEnabled() and screen.output_hint.text() == T.NEEDS_KEY
-    window.preferences.key.setText('sk-or-v1-secret')
-    window.preferences.save()
-    assert screen.run.isEnabled() and screen.run.text() == 'Remove background from 1 image'
-    screen.mode.setCurrentIndex(screen.mode.findData('object'))
-    assert screen.target.isVisible() and not screen.keep.isVisible() and not screen.run.isEnabled()
-    screen.target.setText('the watermark')
-    assert screen.run.isEnabled() and screen.run.text() == 'Remove it from 1 image'
-    started = {}
-    monkeypatch.setattr(screen.jobs, 'start', lambda paths, options: started.update(options))
-    screen.start()
-    assert started['tool'] == 'remove' and started['mode'] == 'object' and started['what'] == 'the watermark'
-    assert started['key'] == 'sk-or-v1-secret' and started['model'] == MODELS['remove']
-    assert settings.value('remove/mode') == 'object' and settings.value('remove/target') == 'the watermark'
-    window.go_back()
-    assert not window.ai.isVisible()

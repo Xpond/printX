@@ -14,8 +14,8 @@ class ToolIcon(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         dark = self.palette().window().color().lightness() < 128
-        color = {'image': ('#007b91', '#69d5e8'), 'pdf': ('#ac1557', '#f36fa5'), 'ai': ('#8a6500', '#ffd84d')}[
-            self.category][dark]
+        colors = {'image': ('#007b91', '#69d5e8'), 'pdf': ('#ac1557', '#f36fa5'), 'ai': ('#8a6500', '#ffd84d')}
+        color = colors[self.category][dark]  # Light, dark.
         painter.setPen(QPen(QColor(color), 1.8))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.translate(3, 3)

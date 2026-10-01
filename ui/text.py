@@ -42,6 +42,17 @@ ERASE = {  # Remove when Something else is chosen.
     **CUTOUT, 'run_empty': 'Remove it', 'run': 'Remove it from {count} images', 'run_one': 'Remove it from 1 image',
     'running': 'Removing…', 'progress': 'Removing · {index} of {total}',
     'success': 'Removed it from {count} images', 'success_one': 'Removed it from 1 image'}
+ENHANCE = {
+    'title': 'Enhance image', 'browse': 'Choose a photo', 'filter': f'Images ({IMAGES})',
+    'empty': 'Drop a photo here, or click to choose one\nJPG, PNG, TIFF, BMP, WEBP and HEIC',
+    'count': '{count} photos', 'count_one': '1 photo', 'run_empty': 'Send', 'run': 'Send', 'run_one': 'Send',
+    'running': 'Enhancing…', 'progress': 'Enhancing…', 'finishing': 'Saving…',
+    'success': 'Saved the new version', 'success_one': 'Saved the new version',
+    'saved': 'Each version saves next to the original. Existing files are kept.'}
+PROMPT_HINT = 'Describe what to change, e.g. make it sharp and clear for printing'
+PICK_TIP = 'Click to make the next change to this version'
+CHOOSE_PHOTO = 'Choose photo'
+NEW_PHOTO = 'New photo'
 PDFS = {'browse': 'Choose PDFs', 'filter': 'PDFs (*.pdf)', 'empty': 'Drop PDFs here, or click to choose files',
         'count': '{count} PDFs', 'count_one': '1 PDF', 'finishing': 'Finishing…'}
 COMPRESS = {

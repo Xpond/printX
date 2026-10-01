@@ -5,6 +5,7 @@ import uuid
 
 from PySide6.QtCore import QObject, QTimer, Signal
 from core.files import output_directory, stage_directory
+from core.thumbnails import SIZE
 from core.worker import job_loop, thumbnail_loop
 
 
@@ -93,6 +94,7 @@ class Thumbnails(QObject):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.size = SIZE  # Longest side in pixels.
         self.process = None
         self.pending = set()
         self.timer = QTimer(self)
@@ -109,7 +111,7 @@ class Thumbnails(QObject):
             self.process.start()
             self.timer.start()
         self.pending.add(path)
-        self.commands.put(path)
+        self.commands.put((path, self.size))
 
     def poll(self):
         try:

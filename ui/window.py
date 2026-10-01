@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (QHBoxLayout, QLabel, QMainWindow, QMessageBox, QS
                                QWidget)
 from ui import text as T
 from ui.compress import Compress
+from ui.enhance import Enhance
 from ui.home import Home
 from ui.make_pdf import MakePdf
 from ui.remove import Remove
@@ -46,12 +47,13 @@ class Window(QMainWindow):
         self.stack = QStackedWidget()
         layout.addWidget(self.stack, 1)
         self.remove = Remove(self.settings)
+        self.enhance = Enhance(self.settings)
         self.upscale = Upscale(self.settings)
         self.make = MakePdf(self.settings)
         self.compress = Compress(self.settings)
         self.split = Split(self.settings)
-        self.tools = {'remove': self.remove, 'upscale': self.upscale, 'make': self.make, 'compress': self.compress,
-                      'split': self.split}
+        self.tools = {'remove': self.remove, 'enhance': self.enhance, 'upscale': self.upscale, 'make': self.make,
+                      'compress': self.compress, 'split': self.split}
         self.home = Home(self.tools)
         self.preferences = Settings(self.settings)
         for widget in (self.home, *self.tools.values(), self.preferences):
