@@ -1,6 +1,8 @@
 from PySide6.QtCore import QLocale, Qt, Signal
 from PySide6.QtWidgets import (QComboBox, QFileDialog, QFormLayout, QHBoxLayout, QLineEdit, QRadioButton,
                                QVBoxLayout, QWidget)
+from core.openrouter import MODELS
+from core.secret import seal
 from ui import text as T
 from ui.widgets import button, label
 
@@ -62,6 +64,22 @@ class Settings(QWidget):
         layout.addLayout(form)
         layout.addWidget(label(T.REGION_NOTE, muted=True))
         layout.addWidget(label(T.APPEARANCE, muted=True))
+        layout.addWidget(label(T.AI_TOOLS))
+        ai = QFormLayout()
+        ai.setSpacing(10)
+        self.key = QLineEdit()  # Write-only: a saved key is never loaded back, and password fields refuse copying.
+        self.key.setEchoMode(QLineEdit.EchoMode.Password)
+        self.key.setPlaceholderText(T.KEY_HINT)
+        self.key_note = label('', muted=True)
+        ai.addRow(T.API_KEY, self.key)
+        self.models = {}
+        for tool, title in T.MODEL_TITLES.items():
+            self.models[tool] = QLineEdit(settings.value(f'ai/{tool}_model', '') or MODELS[tool])
+            self.models[tool].setPlaceholderText(MODELS[tool])
+            ai.addRow(title, self.models[tool])
+        layout.addLayout(ai)
+        layout.addWidget(self.key_note)
+        self.show_key_note()
         self.message = label('')
         layout.addWidget(self.message)
         layout.addStretch()
@@ -80,6 +98,17 @@ class Settings(QWidget):
         self.settings.setValue('output_folder', self.folder.text().strip() if self.fixed.isChecked() else '')
         self.settings.setValue('units', self.units.currentData())
         self.settings.setValue('paper', self.paper.currentData())
+        if self.key.text().strip():
+            self.settings.setValue('ai/key', seal(self.key.text().strip()))
+            self.key.clear()
+        for tool, field in self.models.items():
+            model = field.text().strip() or MODELS[tool]
+            field.setText(model)
+            self.settings.setValue(f'ai/{tool}_model', '' if model == MODELS[tool] else model)  # Follow new defaults.
+        self.show_key_note()
         self.settings.sync()
         self.message.setText(T.SETTINGS_SAVED)
         self.saved.emit()
+
+    def show_key_note(self):
+        self.key_note.setText(T.KEY_SAVED if self.settings.value('ai/key', '') else T.KEY_MISSING)

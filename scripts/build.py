@@ -10,7 +10,7 @@ command = [sys.executable, '-m', 'PyInstaller', '--noconfirm', '--clean', '--one
            '--exclude-module', 'PySide6.QtWebEngineCore', '--exclude-module', 'PySide6.QtWebEngineWidgets',
            '--exclude-module', 'PySide6.QtQml', '--exclude-module', 'PySide6.QtQuick',
            '--exclude-module', 'PySide6.QtMultimedia', '--exclude-module', 'tkinter',
-           '--exclude-module', 'pytest', '--exclude-module', 'docx', '--exclude-module', 'vtracer']
+           '--exclude-module', 'pytest', '--exclude-module', 'docx']
 if sys.platform == 'win32':
     command += ['--manifest', 'assets/windows.manifest', '--add-binary', 'vendor/ghostscript/gsdll64.dll:.',
                 '--add-data', 'vendor/ghostscript/COPYING:ghostscript']

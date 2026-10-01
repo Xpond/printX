@@ -8,9 +8,10 @@
 - Remote: git@github.com:Xpond/printX.git. Windows CI produces a portable one-folder ZIP from phase 1; the installer remains in phase 5.
 
 ## Goal
-A Windows desktop app for a small print shop, written in Python. It does two jobs:
+A Windows desktop app for a small print shop, written in Python. It does three jobs:
 1. Upscale images for printing (classic resampling, no AI, fully offline).
 2. Everyday PDF tasks like ilovepdf.com.
+3. AI image edits through OpenRouter: remove backgrounds or objects, and enhance photos (online, see tool 7).
 The staff using it are not technical. Every task should be: pick a tool, drop files, press one big button. Speed matters, and the UI must never freeze.
 
 ## How to work
@@ -28,7 +29,7 @@ The staff using it are not technical. Every task should be: pick a tool, drop fi
 - Images → PDF: img2pdf (lossless; embeds JPEGs without re-encoding)
 - Compression: Ghostscript (bundle the Windows binaries if feasible, otherwise detect an installed copy); fallback: PyMuPDF image downsampling + cleanup
 - Office → PDF: Microsoft Office via COM (pywin32); fallback: LibreOffice headless
-- Logo → vector: vtracer
+- AI tools: OpenRouter's image API over HTTPS with the standard library (no SDK)
 - Packaging: PyInstaller one-folder build + Inno Setup installer
 
 ## UX rules (most important section)
@@ -55,7 +56,7 @@ The staff using it are not technical. Every task should be: pick a tool, drop fi
 ### 1. Upscale Image
 - Input: JPG, PNG, TIFF, BMP, WEBP, HEIC. Batches.
 - Size (big segmented buttons): Fit print size (default) | 2× | 3× | 4×. Fit print size has a paper dropdown (A6–A0, 10×15 cm / 4×6", 13×18 cm / 5×7", 20×25 cm / 8×10", Letter, Legal, Tabloid, Custom) and DPI (300 default, 150 for large posters), and matches the image's orientation.
-- Each file row shows its pixel size and "Prints sharp up to W × H at 300 DPI" with a green/amber/red badge. In Fit print size mode it shows the scale factor, says "Already big enough" and skips files that need no upscale, and warns above 4× that the result will look soft (suggesting Logo → Vector for logos).
+- Each file row shows its pixel size and "Prints sharp up to W × H at 300 DPI" with a green/amber/red badge. In Fit print size mode it shows the scale factor, says "Already big enough" and skips files that need no upscale, and warns above 4× that the result will look soft.
 - Method: Lanczos resampling, then an unsharp mask (Sharpening: Off / Light (default) / Strong). Tune the defaults on real photos by making before/after crops at 100% and inspecting them: natural, no halos.
 - "Hard edges" toggle for QR codes, barcodes and pixel art: nearest neighbor at a whole-number scale.
 - Correctness: apply EXIF rotation first; convert palette ("P") and 1-bit images before resizing, because Pillow silently uses nearest neighbor for those modes; keep transparency; keep CMYK as CMYK; keep the ICC color profile; write the target DPI into the file.
@@ -82,13 +83,16 @@ The staff using it are not technical. Every task should be: pick a tool, drop fi
 ### 6. PDF → Images
 - JPG or PNG; 150 / 300 (default) / 600 DPI; all pages or a range. Output goes in a folder named after the file.
 
-### 7. Logo → Vector
-- Traces a logo or flat graphic into SVG plus a vector PDF with vtracer. Options: Detail (Fewer colors / Balanced / More colors) and Remove white background. Side-by-side preview. On-screen note: best for logos and flat graphics, not photos.
+### 7. AI tools (owner request; replaces Logo → Vector)
+- First row of the home screen, marked as AI by a process-yellow accent, sparkle icons and an "AI" tag. They need internet and an OpenRouter API key; images are sent to OpenRouter, so the home screen says so.
+- Settings: the API key can only be pasted in, never shown (stored encrypted for the Windows user with DPAPI), plus one editable model name per AI tool so models can change without a new release.
+- Remove background (model `inclusionai/ming-image-0.1-design-layer`): Background (optional description of what to keep) saves a transparent PNG; Something else (described, e.g. a watermark) saves an edited copy in the original's format.
+- Enhance image (model `meta/muse-image`): upscale, restore or retouch by describing it, likely as a chat. Not built yet.
 
 ## Performance
-- The window appears in under 2 seconds: import heavy libraries (PyMuPDF, vtracer, pywin32, pillow-heif) only when a tool first needs them.
+- The window appears in under 2 seconds: import heavy libraries (PyMuPDF, pywin32, pillow-heif) only when a tool first needs them.
 - All work runs off the UI thread with per-file progress, an overall progress bar and a Cancel button. Acceptance test: during the biggest job the window can still be moved and Cancel responds immediately. Cancel removes partial outputs.
-- PyMuPDF doesn't support threading, and any C extension that holds the GIL (check vtracer) will stall the UI from a thread, so run that work in worker processes. Keep a warm pool started on first use, and call multiprocessing.freeze_support() (required for PyInstaller on Windows).
+- PyMuPDF doesn't support threading, and any C extension that holds the GIL will stall the UI from a thread, so run that work in worker processes. Keep a warm pool started on first use, and call multiprocessing.freeze_support() (required for PyInstaller on Windows).
 - Pillow releases the GIL while resizing; benchmark threads vs processes for batch upscaling and use the faster one.
 - Bound batch parallelism by CPU cores and by memory: estimate each job's RAM from its output size and run huge jobs one at a time.
 - Thumbnails load lazily in the background and are cached. Use Pillow's fast JPEG draft/thumbnail path, and Qt model/view so a 500-page PDF or 200 images open instantly.
@@ -96,7 +100,7 @@ The staff using it are not technical. Every task should be: pick a tool, drop fi
 - Write each output to a temp file and rename it when finished, so a crash or cancel never leaves a half-written file.
 
 ## Code structure
-- core/: pure processing functions with no Qt imports (upscale, pdf_tools, office, vectorize). Each takes paths, options, a progress callback and a cancel flag, and returns output paths.
+- core/: pure processing functions with no Qt imports (upscale, pdf_tools, office, remove). Each takes paths, options, a progress callback and a cancel flag, and returns output paths.
 - ui/: home screen, shared tool-screen layout, one screen per tool, settings.
 - app.py as the entry point; tests/ with pytest covering core/.
 
@@ -109,7 +113,7 @@ The staff using it are not technical. Every task should be: pick a tool, drop fi
 1. Skeleton: home screen, shared tool layout, background jobs with progress and cancel, settings, logging. Then Make PDF for images and PDFs.
 2. Upscale Image, including Fit print size and the sharpness badges.
 3. Compress, Split, Organize Pages, PDF → Images.
-4. Office files in Make PDF, Logo → Vector, the before/after preview, the drop-anywhere popup, and an "Add to Send To menu" button in Settings (right-click files → Send to → PrintShop Tools).
+4. Office files in Make PDF, the before/after preview, the drop-anywhere popup, and an "Add to Send To menu" button in Settings (right-click files → Send to → PrintShop Tools).
 5. Packaging: PyInstaller one-folder build (faster startup and fewer antivirus false alarms than one-file; no UPX), windowed, with icon, bundled Ghostscript if used, unused Qt modules excluded. Inno Setup installer with Start menu and desktop shortcuts. A build.bat that does everything in one double-click. Test the built app outside the dev environment.
 6. README for the shop: how to install, the first-run "Windows protected your PC" → More info → Run anyway step, and a one-page how-to.
 

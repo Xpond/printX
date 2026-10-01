@@ -23,6 +23,8 @@ def job_loop(commands, events, answers, cancel):
                 from core.compress import compress as job
             elif options.get('tool') == 'split':
                 from core.pdf_tools import split_pdf as job
+            elif options.get('tool') == 'remove':
+                from core.remove import remove as job
             else:
                 from core.pdf_tools import make_pdf as job
             events.put(('done', job(paths, options, progress, cancel)))
