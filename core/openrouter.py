@@ -43,3 +43,21 @@ def edit(image, prompt, key, model):
         logging.warning('OpenRouter sent no image: %s', str(answer)[:1000])
         raise JobError('ai_failed')
     return images
+
+
+def key_problem(key):
+    """OpenRouter's reason for refusing a key, '' when it accepts it, or None when it cannot be reached."""
+    import http.client
+    import urllib.error
+    import urllib.request
+    request = urllib.request.Request('https://openrouter.ai/api/v1/key', headers={'Authorization': f'Bearer {key}'})
+    try:
+        with urllib.request.urlopen(request, timeout=30):
+            return ''
+    except urllib.error.HTTPError as error:
+        try:
+            return json.load(error)['error']['message']
+        except (ValueError, KeyError, TypeError):
+            return f'HTTP {error.code}'
+    except (OSError, ValueError, http.client.HTTPException):
+        return None

@@ -1,9 +1,10 @@
 import logging
+import threading
 from PySide6.QtCore import QLocale, Signal
 from PySide6.QtWidgets import (QComboBox, QFileDialog, QFormLayout, QHBoxLayout, QLineEdit, QRadioButton,
                                QVBoxLayout, QWidget)
-from core.openrouter import MODELS
-from core.secret import seal
+from core.openrouter import MODELS, key_problem
+from core.secret import seal, unseal
 from ui import text as T
 from ui.widgets import button, label
 
@@ -33,6 +34,7 @@ def combo(entries, selected):
 
 class Settings(QWidget):
     saved = Signal()
+    checked = Signal(object)  # OpenRouter's verdict on the saved key, from a background thread.
 
     def __init__(self, settings):
         super().__init__()
@@ -84,6 +86,7 @@ class Settings(QWidget):
         bottom.addWidget(self.message, 1)
         bottom.addWidget(button(T.SAVE_SETTINGS, self.save, primary=True))
         layout.addLayout(bottom)
+        self.checked.connect(self.show_check)
 
     def choose_folder(self):
         folder = QFileDialog.getExistingDirectory(self, T.CHOOSE_FOLDER, self.folder.text())
@@ -98,8 +101,9 @@ class Settings(QWidget):
         self.settings.setValue('output_folder', self.folder.text().strip() if self.fixed.isChecked() else '')
         self.settings.setValue('units', self.units.currentData())
         self.settings.setValue('paper', self.paper.currentData())
-        if self.key.text().strip():
-            self.settings.setValue('ai/key', seal(self.key.text().strip()))
+        key = ''.join(self.key.text().split())  # Pasted keys sometimes carry spaces or line breaks.
+        if key:
+            self.settings.setValue('ai/key', seal(key))
             self.key.clear()
             logging.info('OpenRouter API key saved')
         for tool, field in self.models.items():
@@ -110,6 +114,23 @@ class Settings(QWidget):
         self.settings.sync()
         self.message.setText(T.SETTINGS_SAVED)
         self.saved.emit()
+        self.check_key()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.check_key()
+
+    def check_key(self):
+        """Ask OpenRouter whether the saved key works, without freezing the window."""
+        key = unseal(self.settings.value('ai/key', ''))
+        if key:
+            self.message.setText(T.KEY_CHECKING)
+            threading.Thread(target=lambda: self.checked.emit(key_problem(key)), daemon=True).start()
+
+    def show_check(self, problem):
+        logging.info('OpenRouter key check: %s', 'accepted' if problem == '' else problem or 'not reachable')
+        self.message.setText(T.KEY_WORKS if problem == '' else T.KEY_UNCHECKED if problem is None
+                             else T.KEY_REFUSED.format(reason=problem))
 
     def show_key_state(self):
         """The empty key box says whether a key is saved, without ever showing it."""

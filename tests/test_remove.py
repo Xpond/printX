@@ -12,7 +12,7 @@ import pytest
 from PIL import Image, ImageDraw
 import core.remove
 from core.files import JobError
-from core.openrouter import edit
+from core.openrouter import edit, key_problem
 from core.remove import remove
 from core.secret import seal, unseal
 
@@ -141,3 +141,21 @@ def test_key_is_sealed_at_rest():
     assert unseal('') == '' and unseal('not base64!') == ''
     if sys.platform == 'win32':
         assert b'secret' not in base64.b64decode(sealed)  # Encrypted for this Windows user, not just encoded.
+
+
+def test_key_check_gives_openrouters_reason(monkeypatch):
+    monkeypatch.setattr(urllib.request, 'urlopen', lambda request, timeout: Answer(b'{"data": {}}'))
+    assert key_problem('sk-good') == ''
+
+    def refuse(request, timeout):
+        assert request.get_header('Authorization') == 'Bearer sk-old'
+        raise urllib.error.HTTPError(request.full_url, 401, 'No', {},
+                                     BytesIO(b'{"error": {"message": "API key expired.", "code": 401}}'))
+    monkeypatch.setattr(urllib.request, 'urlopen', refuse)
+    assert key_problem('sk-old') == 'API key expired.'
+
+    def offline(request, timeout):
+        raise urllib.error.URLError('no route')
+    monkeypatch.setattr(urllib.request, 'urlopen', offline)
+    assert key_problem('sk-good') is None
+

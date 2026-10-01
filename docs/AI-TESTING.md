@@ -6,7 +6,7 @@
 
 1. The first row of the home screen holds **Remove background** and **Enhance image**, each with a yellow stripe, a sparkle icon and a yellow **AI** tag. **Logo to vector** is gone. The line at the bottom says images you send to an AI tool leave this computer.
 2. Open **Remove background** before adding a key: the main button stays grey and the line under it says to add an OpenRouter API key in Settings.
-3. Open **Settings**: the key box says **Paste your key from openrouter.ai**. Paste your key and press **Save settings**. **Settings saved** appears beside the button, and the box empties and now says **Key saved · paste a new one to replace it**. Restart the app and open Settings: it still says **Key saved**, and there is no way to show or copy the key. In `regedit`, `HKEY_CURRENT_USER\Software\PrintShop Tools\PrintShop Tools\ai` holds the key only as scrambled text.
+3. Open **Settings**: the key box says **Paste your key from openrouter.ai**. Paste your key and press **Save settings**. The box empties and now says **Key saved · paste a new one to replace it**, and beside the button the app asks OpenRouter about the key: **OpenRouter accepts the saved key. The AI tools are ready.** If it refuses, the line gives OpenRouter's reason, such as an expired key; create a new key and paste all of it. Restart the app and open Settings: it checks the saved key again, and there is no way to show or copy the key. In `regedit`, `HKEY_CURRENT_USER\Software\PrintShop Tools\PrintShop Tools\ai` holds the key only as scrambled text.
 4. The model boxes show `inclusionai/ming-image-0.1-design-layer` and `meta/muse-image`.
 
 ## Remove background

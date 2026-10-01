@@ -7,8 +7,15 @@ from PySide6.QtWidgets import QLabel, QLineEdit
 from core.openrouter import MODELS
 from core.secret import seal, unseal
 from ui import text as T
+import ui.settings
 from ui.settings import Settings
 from ui.window import Window
+
+
+@pytest.fixture(autouse=True)
+def accepted_keys(monkeypatch):
+    """Settings ask OpenRouter about the saved key; here every key is accepted unless a test says otherwise."""
+    monkeypatch.setattr(ui.settings, 'key_problem', lambda key: '')
 
 
 def test_api_key_is_write_only_and_models_follow_the_defaults(qtbot, tmp_path):
@@ -21,7 +28,7 @@ def test_api_key_is_write_only_and_models_follow_the_defaults(qtbot, tmp_path):
     page.models['enhance'].setText('meta/muse-image-2')
     page.save()
     assert page.key.text() == '' and page.key.placeholderText() == T.KEY_SAVED  # The empty box says so.
-    assert page.message.text() == T.SETTINGS_SAVED
+    qtbot.waitUntil(lambda: page.message.text() == T.KEY_WORKS)  # Checked with OpenRouter after saving.
     assert unseal(settings.value('ai/key')) == 'sk-or-v1-secret'
     assert settings.value('ai/remove_model') == '' and settings.value('ai/enhance_model') == 'meta/muse-image-2'
     page.save()  # Saving again without a new key keeps the old one.
@@ -116,3 +123,20 @@ def test_key_survives_the_windows_registry(qtbot):
     finally:
         settings.clear()
         settings.sync()
+
+
+def test_settings_say_why_openrouter_refuses_the_saved_key(qtbot, tmp_path, monkeypatch):
+    monkeypatch.setattr(ui.settings, 'key_problem', lambda key: 'API key expired.' if key == 'sk-old' else '')
+    settings = QSettings(str(tmp_path / 'settings.ini'), QSettings.Format.IniFormat)
+    settings.setValue('ai/key', seal('sk-old'))
+    window = Window(settings)
+    qtbot.addWidget(window)
+    window.show()
+    window.show_screen(window.preferences)  # Opening Settings checks the saved key.
+    page = window.preferences
+    qtbot.waitUntil(lambda: page.message.text() == T.KEY_REFUSED.format(reason='API key expired.'))
+    page.key.setText(' sk-new\n')
+    page.save()
+    qtbot.waitUntil(lambda: page.message.text() == T.KEY_WORKS)
+    assert unseal(settings.value('ai/key')) == 'sk-new'
+
