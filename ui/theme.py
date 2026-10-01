@@ -52,9 +52,10 @@ def apply_theme(app, dark=None):
         QWidget#chatbody {{ background: {surface}; }}
         QLabel#mine {{ background: {line}; padding: 6px 10px; }}
         QLabel#version {{ border: 2px solid transparent; }}
+        QLabel#drop {{ border: 2px dashed {line}; padding: 12px; }}
         QLabel#version[current="true"] {{ border-color: {yellow}; }}
-        QComboBox, QLineEdit, QAbstractSpinBox {{ background: {surface}; border: 1px solid {line}; padding: 4px 8px; min-height: 22px; }}
-        QComboBox:disabled, QLineEdit:disabled, QAbstractSpinBox:disabled, QCheckBox:disabled {{ color: {muted}; background: {paper}; }}
+        QComboBox, QLineEdit, QAbstractSpinBox, QPlainTextEdit {{ background: {surface}; border: 1px solid {line}; padding: 4px 8px; min-height: 22px; }}
+        QComboBox:disabled, QLineEdit:disabled, QAbstractSpinBox:disabled, QCheckBox:disabled, QPlainTextEdit:disabled {{ color: {muted}; background: {paper}; }}
         QComboBox QAbstractItemView {{ background: {surface}; color: {ink}; selection-background-color: {magenta}; }}
         QListView {{ background: {surface}; border: 1px solid {line}; outline: 0; }}
         QListView::item {{ padding: 8px; border-bottom: 1px solid {line}; }}

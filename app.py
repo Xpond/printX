@@ -9,6 +9,7 @@ def main():
     import logging
     from logging_setup import configure_logging
     configure_logging()
+    sys.excepthook = lambda *error: logging.error('Unexpected error', exc_info=error)
     logging.info('Loading desktop interface')
     from PySide6.QtWidgets import QApplication
     from PySide6.QtCore import QSettings, qInstallMessageHandler

@@ -26,11 +26,12 @@ class Chat(QScrollArea):
         self.lines = QVBoxLayout(body)
         self.lines.setContentsMargins(12, 12, 12, 12)
         self.lines.setSpacing(10)
-        self.empty = label(empty, muted=True)  # Until a photo is chosen, the whole area invites one.
+        self.empty = label(empty, 'drop', muted=True)  # A card where the photo will appear; drop anywhere.
+        self.empty.setFixedSize(SIDE + 4, SIDE + 4)
         self.empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.empty.setCursor(Qt.CursorShape.PointingHandCursor)
         self.empty.mouseReleaseEvent = lambda event: self.browse.emit()
-        self.lines.addWidget(self.empty, 1)
+        self.lines.addWidget(self.empty)
         self.lines.addStretch()
         self.setWidget(body)
         self.rows, self.pictures = [], {}  # Pictures by path: (image, caption).

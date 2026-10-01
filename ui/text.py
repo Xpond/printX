@@ -122,9 +122,8 @@ PAGES_PER_PDF = ' pages per PDF'
 PARTS = '{status} into {count} PDFs'
 REMOVE_WHAT = 'Remove'
 REMOVE_MODES = [('Background', 'background'), ('Something else', 'object')]
-KEEP = 'Keep'
-KEEP_HINT = 'the main subject'
-TARGET_HINT = 'Describe it, e.g. the watermark or the date stamp'
+KEEP_HINT = 'Optional: describe what to keep, e.g. the woman on the left and her dog'
+TARGET_HINT = 'Describe what to remove, e.g. the watermark in the corner or the date stamp'
 NEEDS_KEY = 'Add an OpenRouter API key in Settings to use AI tools.'
 CANCEL = 'Cancel'
 CANCELLING = 'Cancelling…'
@@ -158,7 +157,8 @@ ERRORS = {
     'names_exhausted': 'Too many files have this name. Choose another output folder.',
     'worker': 'Processing stopped unexpectedly. Try fewer files; details were saved to the log.',
     'ai_offline': 'Could not reach OpenRouter. Check the internet connection and try again.',
-    'ai_key': 'OpenRouter did not accept the API key. Paste a new key in Settings.',
+    'ai_key': 'OpenRouter did not accept the API key: it may be mistyped, expired or deleted. '
+              'Create a new key at openrouter.ai and paste it in Settings.',
     'ai_credit': 'The OpenRouter account is out of credit. Add credit at openrouter.ai and try again.',
     'ai_busy': 'The AI service is busy. Wait a minute and try again.',
     'ai_model': 'OpenRouter has no model with this name. Check the model names in Settings.',
@@ -180,9 +180,8 @@ FOLDER_REQUIRED = 'Choose an output folder first.'
 APPEARANCE = 'Appearance follows your system’s light or dark mode.'
 AI_TOOLS = 'AI tools'
 API_KEY = 'OpenRouter API key'
-KEY_HINT = 'Paste a new key'
-KEY_SAVED = 'A key is saved. It is never shown; paste a new one to replace it.'
-KEY_MISSING = 'No key yet. Create one at openrouter.ai, then paste it here.'
+KEY_HINT = 'Paste your key from openrouter.ai'
+KEY_SAVED = 'Key saved · paste a new one to replace it'
 MODEL_TITLES = {'remove': 'Remove background model', 'enhance': 'Enhance image model'}
 THUMB = {'locked': 'Password protected', 'unreadable': 'Preview unavailable'}
 PAGES = '{count} pages'
