@@ -13,8 +13,8 @@ class Cancelled(Exception):
 
 
 class JobError(Exception):
-    def __init__(self, code):
-        self.code = code
+    def __init__(self, code, detail=''):
+        self.code, self.detail = code, detail  # Detail: another service's own words, such as OpenRouter's reason.
         super().__init__(code)
 
 
@@ -61,7 +61,8 @@ def each_file(paths, options, progress, cancel, one):
             except Exception as error:
                 if not isinstance(error, JobError):
                     logging.exception('Could not process %s', path)
-                progress('skipped', {'path': str(path), 'code': error_code(error)})
+                progress('skipped', {'path': str(path), 'code': error_code(error),
+                                     'detail': getattr(error, 'detail', '')})
             progress('progress', {'index': index + 1, 'total': len(paths), 'path': str(path)})
         if not outputs:
             raise JobError('no_outputs')

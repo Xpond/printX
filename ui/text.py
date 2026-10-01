@@ -136,6 +136,7 @@ SAVED_NEXT = 'Saves next to the first original. Existing files are kept.'
 SAVED_EACH = 'Saves next to each original. Existing files are kept.'
 SAVED_FIXED = 'Saves in {folder}. Existing files are kept.'
 SKIPPED = 'Skipped {name}: {reason}'
+OPENROUTER_SAID = '{reason} OpenRouter said: “{detail}”'
 NOTICES = {'first_page': 'Only the first page of {name} was upscaled.'}
 PASSWORD_TITLE = 'Enter PDF password'
 PASSWORD = '{name} is password protected. Enter its password to continue, or cancel to skip it.'
@@ -183,8 +184,8 @@ KEY_HINT = 'Paste your key from openrouter.ai'
 KEY_SAVED = 'Key saved · paste a new one to replace it'
 KEY_CHECKING = 'Checking the saved key with OpenRouter…'
 KEY_WORKS = 'OpenRouter accepts the saved key. The AI tools are ready.'
-KEY_REFUSED = ('OpenRouter refuses the saved key: “{reason}” Create a new key at openrouter.ai, '
-               'paste all of it here and save.')
+KEY_REFUSED = ('OpenRouter refuses the saved key: “{reason}” Paste the whole key once (the box shows it) '
+               'and save, or create a new key at openrouter.ai.')
 KEY_UNCHECKED = 'Could not reach OpenRouter to check the saved key. Check the internet connection.'
 MODEL_TITLES = {'remove': 'Remove background model', 'enhance': 'Enhance image model'}
 THUMB = {'locked': 'Password protected', 'unreadable': 'Preview unavailable'}

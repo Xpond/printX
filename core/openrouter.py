@@ -30,10 +30,11 @@ def edit(image, prompt, key, model):
         with urllib.request.urlopen(request, timeout=300) as response:
             answer = json.load(response)
     except urllib.error.HTTPError as error:
-        logging.warning('OpenRouter answered %s: %s', error.code, error.read(1000))
+        detail = reason(error)
+        logging.warning('OpenRouter answered %s: %s', error.code, detail)
         if error.code in (408, 429) or error.code >= 500:
-            raise JobError('ai_busy')
-        raise JobError({401: 'ai_key', 402: 'ai_credit', 404: 'ai_model'}.get(error.code, 'ai_failed'))
+            raise JobError('ai_busy', detail)
+        raise JobError({401: 'ai_key', 402: 'ai_credit', 404: 'ai_model'}.get(error.code, 'ai_failed'), detail)
     except (OSError, ValueError, http.client.HTTPException):  # No connection, a timeout, or a cut-off answer.
         logging.warning('Could not reach OpenRouter', exc_info=True)
         raise JobError('ai_offline')
@@ -55,9 +56,14 @@ def key_problem(key):
         with urllib.request.urlopen(request, timeout=30):
             return ''
     except urllib.error.HTTPError as error:
-        try:
-            return json.load(error)['error']['message']
-        except (ValueError, KeyError, TypeError):
-            return f'HTTP {error.code}'
+        return reason(error)
     except (OSError, ValueError, http.client.HTTPException):
         return None
+
+
+def reason(error):
+    """OpenRouter's own words for a refused request."""
+    try:
+        return json.load(error)['error']['message']
+    except (ValueError, KeyError, TypeError):
+        return f'HTTP {error.code}'

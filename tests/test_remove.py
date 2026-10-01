@@ -120,10 +120,12 @@ def test_openrouter_request_and_errors(monkeypatch):
     for code, expected in [(401, 'ai_key'), (402, 'ai_credit'), (429, 'ai_busy'), (503, 'ai_busy'), (404, 'ai_model'),
                            (400, 'ai_failed')]:
         def refuse(request, timeout, code=code):
-            raise urllib.error.HTTPError(request.full_url, code, 'No', {}, BytesIO(b'{"error": "no"}'))
+            raise urllib.error.HTTPError(request.full_url, code, 'No', {},
+                                         BytesIO(b'{"error": {"message": "User not found.", "code": 401}}'))
         monkeypatch.setattr(urllib.request, 'urlopen', refuse)
-        with pytest.raises(JobError, match=expected):
+        with pytest.raises(JobError, match=expected) as refused:
             edit(Image.new('RGB', (10, 10)), 'Remove it', 'sk-test', 'test/model')
+        assert refused.value.detail == 'User not found.'  # Shown to staff with the message.
 
     def offline(request, timeout):
         raise urllib.error.URLError('no route')

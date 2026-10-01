@@ -69,7 +69,7 @@ class Enhance(AiTool):
 
     def on_event(self, kind, data):
         if kind == 'skipped':  # Problems belong in the conversation, under the instruction.
-            self.chat.say(T.ERRORS[data['code']])
+            self.chat.say(self.reason(data))
             return
         super().on_event(kind, data)
         if kind == 'output':
