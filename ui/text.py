@@ -157,8 +157,7 @@ ERRORS = {
     'names_exhausted': 'Too many files have this name. Choose another output folder.',
     'worker': 'Processing stopped unexpectedly. Try fewer files; details were saved to the log.',
     'ai_offline': 'Could not reach OpenRouter. Check the internet connection and try again.',
-    'ai_key': 'OpenRouter did not accept the API key: it may be mistyped, expired or deleted. '
-              'Create a new key at openrouter.ai and paste it in Settings.',
+    'ai_key': 'OpenRouter did not accept the saved API key. Open Settings to see why and paste a new key.',
     'ai_credit': 'The OpenRouter account is out of credit. Add credit at openrouter.ai and try again.',
     'ai_busy': 'The AI service is busy. Wait a minute and try again.',
     'ai_model': 'OpenRouter has no model with this name. Check the model names in Settings.',
@@ -182,6 +181,11 @@ AI_TOOLS = 'AI tools'
 API_KEY = 'OpenRouter API key'
 KEY_HINT = 'Paste your key from openrouter.ai'
 KEY_SAVED = 'Key saved · paste a new one to replace it'
+KEY_CHECKING = 'Checking the saved key with OpenRouter…'
+KEY_WORKS = 'OpenRouter accepts the saved key. The AI tools are ready.'
+KEY_REFUSED = ('OpenRouter refuses the saved key: “{reason}” Create a new key at openrouter.ai, '
+               'paste all of it here and save.')
+KEY_UNCHECKED = 'Could not reach OpenRouter to check the saved key. Check the internet connection.'
 MODEL_TITLES = {'remove': 'Remove background model', 'enhance': 'Enhance image model'}
 THUMB = {'locked': 'Password protected', 'unreadable': 'Preview unavailable'}
 PAGES = '{count} pages'
