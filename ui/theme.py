@@ -48,6 +48,11 @@ def apply_theme(app, dark=None):
         QFrame#tile[active="true"][category="image"] {{ border-left-color: {cyan}; }}
         QFrame#tile[active="true"][category="ai"] {{ border-left-color: {yellow}; }}
         QLabel#ai {{ background: {yellow}; color: #202226; font-weight: bold; font-size: 12px; padding: 1px 6px; }}
+        QScrollArea#chat {{ background: {surface}; border: 1px solid {line}; }}
+        QWidget#chatbody {{ background: {surface}; }}
+        QLabel#mine {{ background: {line}; padding: 6px 10px; }}
+        QLabel#version {{ border: 2px solid transparent; }}
+        QLabel#version[current="true"] {{ border-color: {yellow}; }}
         QComboBox, QLineEdit, QAbstractSpinBox {{ background: {surface}; border: 1px solid {line}; padding: 4px 8px; min-height: 22px; }}
         QComboBox:disabled, QLineEdit:disabled, QAbstractSpinBox:disabled, QCheckBox:disabled {{ color: {muted}; background: {paper}; }}
         QComboBox QAbstractItemView {{ background: {surface}; color: {ink}; selection-background-color: {magenta}; }}

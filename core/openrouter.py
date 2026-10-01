@@ -8,7 +8,7 @@ from core.files import JobError
 
 URL = 'https://openrouter.ai/api/v1/images'
 MODELS = {'remove': 'inclusionai/ming-image-0.1-design-layer', 'enhance': 'meta/muse-image'}
-SIDE = 2048  # Longest side sent; the models answer at about one megapixel anyway.
+SIDE = 2048  # Longest side sent; the models answer at one to two and a half megapixels anyway.
 
 
 def edit(image, prompt, key, model):

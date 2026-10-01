@@ -87,7 +87,7 @@ The staff using it are not technical. Every task should be: pick a tool, drop fi
 - First row of the home screen, marked as AI by a process-yellow accent, sparkle icons and an "AI" tag. They need internet and an OpenRouter API key; images are sent to OpenRouter, so the home screen says so.
 - Settings: the API key can only be pasted in, never shown (stored encrypted for the Windows user with DPAPI), plus one editable model name per AI tool so models can change without a new release.
 - Remove background (model `inclusionai/ming-image-0.1-design-layer`): Background (optional description of what to keep) saves a transparent PNG; Something else (described, e.g. a watermark) saves an edited copy in the original's format.
-- Enhance image (model `meta/muse-image`): upscale, restore or retouch by describing it, likely as a chat. Not built yet.
+- Enhance image (model `meta/muse-image`): a chat about one photo. Each instruction makes a new version from the highlighted one (the latest, or any earlier one clicked) and saves it next to the original as `name_enhanced` in the original's format.
 
 ## Performance
 - The window appears in under 2 seconds: import heavy libraries (PyMuPDF, pywin32, pillow-heif) only when a tool first needs them.

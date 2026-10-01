@@ -7,15 +7,11 @@ every other pixel stays as sharp as it was.
 from functools import reduce
 
 from core.files import IMAGE_EXTENSIONS, JobError, check_cancel, each_file, output_directory, publish, staging
+from core.images import flat_photo
 from core.openrouter import edit
 from core.upscale import SAVE, output_format
 
 LAYERS = 'Number of layers: 2. Layer 1: {first}, with a transparent background. Layer 2: {second}.'
-
-
-def opacity(layer):
-    from PIL import ImageStat
-    return ImageStat.Stat(layer.getchannel('A')).mean[0]
 
 
 def changes(before, after):
@@ -28,8 +24,7 @@ def changes(before, after):
 
 
 def remove(paths, options, progress, cancel):
-    from PIL import Image, ImageChops, ImageOps
-    from core.images import pillow_open
+    from PIL import Image, ImageChops, ImageStat
     what, background = options['what'].strip(), options['mode'] == 'background'
     prompt = (LAYERS.format(first=what or 'the main subject', second='the background') if background else
               LAYERS.format(first=what, second=f'everything except {what}'))
@@ -37,15 +32,9 @@ def remove(paths, options, progress, cancel):
     def one(index, path):
         if path.suffix.lower() not in IMAGE_EXTENSIONS:
             raise JobError('not_image')
-        with pillow_open(path) as source:
-            keep = {key: source.info[key] for key in ('dpi', 'icc_profile') if source.info.get(key)}
-            if source.mode not in ('RGB', 'RGBA'):
-                keep.pop('icc_profile', None)  # A CMYK or grey profile does not describe RGB pixels.
-            image = ImageOps.exif_transpose(source).convert('RGBA')
-        photo = Image.new('RGB', image.size, 'white')
-        photo.paste(image, mask=image.getchannel('A'))
+        photo, keep = flat_photo(path)
         layers = sorted((layer.convert('RGBA') for layer in edit(photo, prompt, options['key'], options['model'])),
-                        key=opacity)  # The solid base comes last, whatever order the model used.
+                        key=lambda layer: ImageStat.Stat(layer.getchannel('A')).mean[0])  # The solid base comes last.
         check_cancel(cancel)
         if background:
             alpha = reduce(ImageChops.lighter, [layer.getchannel('A') for layer in layers[:-1] or layers])

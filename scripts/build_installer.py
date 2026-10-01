@@ -14,7 +14,7 @@ if not Path(compiler).is_file():
 
 bundle = root / 'dist/PrintShop Tools'
 shutil.copytree(root / 'samples', bundle / 'samples', dirs_exist_ok=True)
-shutil.copy2(root / 'docs/PHASE3-TESTING.md', bundle / 'Read me first.md')
+shutil.copy2(root / 'docs/AI-TESTING.md', bundle / 'Read me first.md')
 subprocess.run([str(compiler), str(root / 'installer.iss')], cwd=root, check=True)
 installer = root / 'dist/installer/PrintShop-Tools-Setup.exe'
 with installer.open('rb') as source:

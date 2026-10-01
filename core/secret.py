@@ -1,4 +1,4 @@
-"""The API key at rest: Windows encrypts it for the signed-in user (DPAPI), so the registry never holds it in plain text."""
+"""The API key at rest: Windows encrypts it for the signed-in user (DPAPI), never plain text in the registry."""
 import base64
 import sys
 
