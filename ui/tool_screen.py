@@ -170,7 +170,7 @@ class ToolScreen(QWidget):
             self.set_status(self.words['finishing'] if data['index'] == data['total'] else self.words['progress'].format(
                 name=Path(data['path']).name, index=int(data['index']) + 1, total=data['total']))
         elif kind == 'skipped':
-            self.message(T.SKIPPED.format(name=Path(data['path']).name, reason=T.ERRORS[data['code']]))
+            self.message(T.SKIPPED.format(name=Path(data['path']).name, reason=self.reason(data)))
         elif kind == 'notice':
             self.message(T.NOTICES[data['code']].format(name=Path(data['path']).name))
         elif kind == 'password':
@@ -192,6 +192,11 @@ class ToolScreen(QWidget):
             else:
                 self.set_status(T.CANCELLED if kind == 'cancelled' else T.ERRORS[data])
             self.results.setVisible(self.outputs.count() > 0)
+
+    def reason(self, data):
+        """Why a file was skipped, with OpenRouter's own words when it gave any."""
+        text = T.ERRORS[data['code']]
+        return T.OPENROUTER_SAID.format(reason=text, detail=data['detail']) if data.get('detail') else text
 
     def reset(self):
         self.model.replace([])

@@ -1,4 +1,4 @@
-**New in 0.4.2:** Settings now asks OpenRouter whether the saved key works, each time it opens and after saving, and shows the answer beside the Save button, with OpenRouter's reason when it refuses the key (for example, an expired key). Spaces and line breaks pasted with a key are removed.
+**New in 0.4.2:** the key box shows what you paste (once saved, it is cleared and never shown again), so a key pasted twice or only partly is easy to spot. Settings asks OpenRouter whether the saved key works, each time it opens and after saving, and shows the answer beside the Save button with OpenRouter's reason when it refuses the key. When an AI tool fails, its message now includes OpenRouter's own words. Spaces and line breaks pasted with a key are removed.
 
 **0.4.1:** the key box in Settings now says when a key is saved, and the AI screens give the description most of the room: Remove background shows its photos in one row, and both tools have a large text box where Enter runs and Shift+Enter starts a new line. When OpenRouter refuses a key, the message now says it may have expired.
 

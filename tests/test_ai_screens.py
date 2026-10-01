@@ -23,7 +23,8 @@ def test_api_key_is_write_only_and_models_follow_the_defaults(qtbot, tmp_path):
     window = Window(settings)
     qtbot.addWidget(window)
     page = window.preferences
-    assert page.key.echoMode() == QLineEdit.EchoMode.Password and page.key.placeholderText() == T.KEY_HINT
+    assert page.key.echoMode() == QLineEdit.EchoMode.Normal  # You can see what you pasted before saving.
+    assert page.key.placeholderText() == T.KEY_HINT
     page.key.setText(' sk-or-v1-secret ')
     page.models['enhance'].setText('meta/muse-image-2')
     page.save()
@@ -102,8 +103,9 @@ def test_enhance_is_a_conversation_about_one_photo(qtbot, tmp_path, photo, monke
     screen.jobs.busy = False
     screen.on_event('done', [str(version)])
     assert screen.model.paths == [str(version)] and screen.outputs.currentData() == str(version)
-    screen.on_event('skipped', {'path': str(version), 'code': 'ai_busy'})
-    assert T.ERRORS['ai_busy'] in [label.text() for label in screen.chat.findChildren(QLabel)]
+    screen.on_event('skipped', {'path': str(version), 'code': 'ai_key', 'detail': 'User not found.'})
+    said = T.OPENROUTER_SAID.format(reason=T.ERRORS['ai_key'], detail='User not found.')
+    assert said in [label.text() for label in screen.chat.findChildren(QLabel)]  # OpenRouter's own words.
     screen.chat.picked.emit(str(photo))  # Go back: the next change starts from the original.
     assert screen.model.paths == [str(photo)] and not screen.chat.pictures[str(version)][0].property('current')
     screen.again.click()

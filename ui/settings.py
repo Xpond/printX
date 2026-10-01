@@ -70,8 +70,7 @@ class Settings(QWidget):
         layout.addWidget(label(T.AI_TOOLS))
         ai = QFormLayout()
         ai.setSpacing(10)
-        self.key = QLineEdit()  # Write-only: a saved key is never loaded back, and password fields refuse copying.
-        self.key.setEchoMode(QLineEdit.EchoMode.Password)
+        self.key = QLineEdit()  # Shows what you paste, to check it; once saved it is cleared and never shown again.
         ai.addRow(T.API_KEY, self.key)
         self.models = {}
         for tool, title in T.MODEL_TITLES.items():
