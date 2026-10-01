@@ -3,16 +3,18 @@ APP = 'PrintShop Tools'
 HOME_TITLE = 'Ready for the next job.'
 HOME_DESCRIPTION = 'Choose a tool. Add your files. We’ll take care of the rest.'
 TOOLS = [
+    ('remove', 'Remove background', 'Cut out the subject, or remove anything else.', 'ai'),
+    ('enhance', 'Enhance image', 'Upscale, restore or retouch a photo by describing it.', 'ai'),
     ('upscale', 'Upscale image', 'Make photos larger for printing.', 'image'),
     ('make', 'Make PDF', 'Bring images and PDFs together.', 'pdf'),
     ('compress', 'Compress PDF', 'Make a PDF smaller to send.', 'pdf'),
     ('split', 'Split PDF', 'Save just the pages you need.', 'pdf'),
     ('organize', 'Organize pages', 'Reorder, rotate or remove pages.', 'pdf'),
     ('render', 'PDF to images', 'Save PDF pages as JPG or PNG.', 'pdf'),
-    ('vector', 'Logo to vector', 'Make a logo sharp at any size.', 'image'),
 ]
 LATER = 'Coming in a later phase'
-OFFLINE = 'Your files stay on this computer.'
+OFFLINE = 'Your files stay on this computer, except images you send to an AI tool.'
+AI = 'AI'
 BACK = 'Back'
 SETTINGS = 'Settings'
 IMAGES = '*.jpg *.jpeg *.png *.tif *.tiff *.bmp *.webp *.heic *.heif'
@@ -30,6 +32,16 @@ UPSCALE = {
     'run_empty': 'Upscale images', 'run': 'Upscale {count} images', 'run_one': 'Upscale 1 image',
     'running': 'Upscaling…', 'progress': 'Upscaling · {index} of {total}',  # Files run in parallel.
     'finishing': 'Finishing…', 'success': 'Upscaled {count} images', 'success_one': 'Upscaled 1 image'}
+CUTOUT = {
+    **{key: UPSCALE[key] for key in ('browse', 'filter', 'empty', 'count', 'count_one', 'finishing')},
+    'title': 'Remove background', 'run_empty': 'Remove background', 'run': 'Remove background from {count} images',
+    'run_one': 'Remove background from 1 image', 'running': 'Removing background…',
+    'progress': 'Removing background · {index} of {total}',
+    'success': 'Removed the background from {count} images', 'success_one': 'Removed the background from 1 image'}
+ERASE = {  # Remove when Something else is chosen.
+    **CUTOUT, 'run_empty': 'Remove it', 'run': 'Remove it from {count} images', 'run_one': 'Remove it from 1 image',
+    'running': 'Removing…', 'progress': 'Removing · {index} of {total}',
+    'success': 'Removed it from {count} images', 'success_one': 'Removed it from 1 image'}
 PDFS = {'browse': 'Choose PDFs', 'filter': 'PDFs (*.pdf)', 'empty': 'Drop PDFs here, or click to choose files',
         'count': '{count} PDFs', 'count_one': '1 PDF', 'finishing': 'Finishing…'}
 COMPRESS = {
@@ -74,10 +86,8 @@ HARD_TIP = 'Keeps every pixel a crisp square instead of smoothing, at a whole-nu
 SHARP_TO = 'Sharp to {width} × {height} {unit}'
 GRADES = {'big': 'Already big enough', 'sharp': '{scale}× · sharp', 'soft': '{scale}× · slightly soft',
           'blurry': '{scale}× · soft'}
-BLURRY_ONE = ('1 image needs more than 4× and will print soft. Print smaller, use Hard edges for a QR code, '
-              'or Logo to vector for a logo.')
-BLURRY = ('{count} images need more than 4× and will print soft. Print smaller, use Hard edges for QR codes, '
-          'or Logo to vector for logos.')
+BLURRY_ONE = '1 image needs more than 4× and will print soft. Print smaller, or use Hard edges for a QR code.'
+BLURRY = '{count} images need more than 4× and will print soft. Print smaller, or use Hard edges for QR codes.'
 HUGE_TITLE = 'Very large result'
 HUGE = 'The largest result will be about {megapixels} megapixels. It needs a lot of memory and disk space.'
 HUGE_YES = 'Upscale anyway'
@@ -99,6 +109,12 @@ RANGES_EXAMPLE = '1-3, 5, 8-10'
 RANGES_HELP = 'Type pages like 1-3, 5, 8-10.'
 PAGES_PER_PDF = ' pages per PDF'
 PARTS = '{status} into {count} PDFs'
+REMOVE_WHAT = 'Remove'
+REMOVE_MODES = [('Background', 'background'), ('Something else', 'object')]
+KEEP = 'Keep'
+KEEP_HINT = 'the main subject'
+TARGET_HINT = 'Describe it, e.g. the watermark or the date stamp'
+NEEDS_KEY = 'Add an OpenRouter API key in Settings to use AI tools.'
 CANCEL = 'Cancel'
 CANCELLING = 'Cancelling…'
 CANCELLED = 'Cancelled. Unfinished files were removed.'
@@ -130,6 +146,13 @@ ERRORS = {
     'memory': 'There is not enough memory for a result this big. Choose a smaller size or close other apps.',
     'names_exhausted': 'Too many files have this name. Choose another output folder.',
     'worker': 'Processing stopped unexpectedly. Try fewer files; details were saved to the log.',
+    'ai_offline': 'Could not reach OpenRouter. Check the internet connection and try again.',
+    'ai_key': 'OpenRouter did not accept the API key. Paste a new key in Settings.',
+    'ai_credit': 'The OpenRouter account is out of credit. Add credit at openrouter.ai and try again.',
+    'ai_busy': 'The AI service is busy. Wait a minute and try again.',
+    'ai_model': 'OpenRouter has no model with this name. Check the model names in Settings.',
+    'ai_failed': 'The AI could not edit this image. Try again, or describe it differently.',
+    'ai_nothing': 'The AI found nothing to remove. Describe it differently and try again.',
 }
 OUTPUT_FOLDER = 'Output folder'
 NEXT_ORIGINAL = 'Next to the original file'
@@ -144,6 +167,12 @@ SAVE_SETTINGS = 'Save settings'
 SETTINGS_SAVED = 'Settings saved'
 FOLDER_REQUIRED = 'Choose an output folder first.'
 APPEARANCE = 'Appearance follows your system’s light or dark mode.'
+AI_TOOLS = 'AI tools'
+API_KEY = 'OpenRouter API key'
+KEY_HINT = 'Paste a new key'
+KEY_SAVED = 'A key is saved. It is never shown; paste a new one to replace it.'
+KEY_MISSING = 'No key yet. Create one at openrouter.ai, then paste it here.'
+MODEL_TITLES = {'remove': 'Remove background model', 'enhance': 'Enhance image model'}
 THUMB = {'locked': 'Password protected', 'unreadable': 'Preview unavailable'}
 PAGES = '{count} pages'
 PIXELS = '{width} × {height} px'

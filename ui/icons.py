@@ -14,7 +14,8 @@ class ToolIcon(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         dark = self.palette().window().color().lightness() < 128
-        color = ('#69d5e8' if dark else '#007b91') if self.category == 'image' else ('#f36fa5' if dark else '#ac1557')
+        color = {'image': ('#007b91', '#69d5e8'), 'pdf': ('#ac1557', '#f36fa5'), 'ai': ('#8a6500', '#ffd84d')}[
+            self.category][dark]
         painter.setPen(QPen(QColor(color), 1.8))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.translate(3, 3)
@@ -47,9 +48,22 @@ class ToolIcon(QWidget):
             painter.drawRect(1, 3, 22, 18)
             painter.drawEllipse(QRectF(15, 6, 4, 4))
             painter.drawPolyline(QPolygonF([QPointF(2, 20), QPointF(9, 10), QPointF(15, 17), QPointF(19, 13), QPointF(23, 20)]))
+        elif self.tool == 'remove':
+            painter.setPen(QPen(QColor(color), 1.4, Qt.PenStyle.DashLine))
+            painter.drawRect(1, 5, 15, 17)
+            painter.setPen(QPen(QColor(color), 1.8))
+            painter.drawEllipse(QRectF(10, 9, 7, 7))
+            painter.drawArc(QRectF(6, 17, 15, 12), 0, 180 * 16)
+            sparkle(painter, 20, 4, 4)
         else:
-            path = QPainterPath(QPointF(2, 20))
-            path.cubicTo(2, 0, 22, 24, 22, 4)
-            painter.drawPath(path)
-            painter.drawRect(0, 18, 4, 4)
-            painter.drawRect(20, 2, 4, 4)
+            sparkle(painter, 10, 14, 9)
+            sparkle(painter, 20, 4, 4)
+
+
+def sparkle(painter, x, y, radius):
+    """A four-point star, the common mark for AI."""
+    tips = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, -1)]
+    path = QPainterPath(QPointF(x, y - radius))
+    for (ax, ay), (bx, by) in zip(tips, tips[1:]):  # Sides curve in towards the centre.
+        path.quadTo(x + (ax + bx) * radius / 5, y + (ay + by) * radius / 5, x + bx * radius, y + by * radius)
+    painter.drawPath(path)

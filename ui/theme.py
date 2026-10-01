@@ -21,6 +21,7 @@ def apply_theme(app, dark=None):
     muted = '#b8bcc3' if dark else '#5b6065'
     magenta = '#f36fa5' if dark else '#ac1557'
     cyan = '#69d5e8' if dark else '#007b91'  # Image tools; magenta marks PDF tools.
+    yellow = '#ffd84d' if dark else '#f2c200'  # AI tools, the third process ink.
     palette = QPalette()
     for role, color in [(QPalette.Window, paper), (QPalette.WindowText, ink),
                         (QPalette.Base, surface), (QPalette.AlternateBase, paper),
@@ -45,6 +46,8 @@ def apply_theme(app, dark=None):
         QFrame#tile {{ background: {surface}; border: 1px solid {line}; }}
         QFrame#tile[active="true"] {{ border-left: 4px solid {magenta}; }}
         QFrame#tile[active="true"][category="image"] {{ border-left-color: {cyan}; }}
+        QFrame#tile[active="true"][category="ai"] {{ border-left-color: {yellow}; }}
+        QLabel#ai {{ background: {yellow}; color: #202226; font-weight: bold; font-size: 12px; padding: 1px 6px; }}
         QComboBox, QLineEdit, QAbstractSpinBox {{ background: {surface}; border: 1px solid {line}; padding: 4px 8px; min-height: 22px; }}
         QComboBox:disabled, QLineEdit:disabled, QAbstractSpinBox:disabled, QCheckBox:disabled {{ color: {muted}; background: {paper}; }}
         QComboBox QAbstractItemView {{ background: {surface}; color: {ink}; selection-background-color: {magenta}; }}

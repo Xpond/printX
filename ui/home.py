@@ -1,5 +1,5 @@
-from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QVBoxLayout, QWidget
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 from ui import text as T
 from ui.icons import ToolIcon
 from ui.widgets import button, label
@@ -35,6 +35,10 @@ class Home(QWidget):
             if key not in ready:
                 pick.setToolTip(T.LATER)
             row.addWidget(pick, 1)
+            if category == 'ai':
+                tag = QLabel(T.AI)
+                tag.setObjectName('ai')
+                row.addWidget(tag, alignment=Qt.AlignmentFlag.AlignVCenter)
             box.addLayout(row)
             box.addWidget(label(description, muted=True))
             if key not in ready:

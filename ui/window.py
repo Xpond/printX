@@ -1,11 +1,13 @@
 from pathlib import Path
-from PySide6.QtCore import QSettings, QTimer
+from PySide6.QtCore import QSettings, Qt, QTimer
 from PySide6.QtGui import QIcon, QKeySequence, QShortcut
-from PySide6.QtWidgets import QHBoxLayout, QMainWindow, QMessageBox, QScrollArea, QStackedWidget, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (QHBoxLayout, QLabel, QMainWindow, QMessageBox, QScrollArea, QStackedWidget, QVBoxLayout,
+                               QWidget)
 from ui import text as T
 from ui.compress import Compress
 from ui.home import Home
 from ui.make_pdf import MakePdf
+from ui.remove import Remove
 from ui.settings import Settings
 from ui.split import Split
 from ui.upscale import Upscale
@@ -33,17 +35,23 @@ class Window(QMainWindow):
         self.back = button(T.BACK, self.go_back)
         nav.addWidget(self.back)
         self.title = label(T.APP, 'brand')
-        nav.addWidget(self.title, 1)
+        nav.addWidget(self.title)
+        self.ai = QLabel(T.AI)
+        self.ai.setObjectName('ai')
+        nav.addWidget(self.ai, alignment=Qt.AlignmentFlag.AlignVCenter)
+        nav.addStretch(1)
         self.settings_button = button(T.SETTINGS, lambda: self.show_screen(self.preferences))
         nav.addWidget(self.settings_button)
         layout.addLayout(nav)
         self.stack = QStackedWidget()
         layout.addWidget(self.stack, 1)
+        self.remove = Remove(self.settings)
         self.upscale = Upscale(self.settings)
         self.make = MakePdf(self.settings)
         self.compress = Compress(self.settings)
         self.split = Split(self.settings)
-        self.tools = {'upscale': self.upscale, 'make': self.make, 'compress': self.compress, 'split': self.split}
+        self.tools = {'remove': self.remove, 'upscale': self.upscale, 'make': self.make, 'compress': self.compress,
+                      'split': self.split}
         self.home = Home(self.tools)
         self.preferences = Settings(self.settings)
         for widget in (self.home, *self.tools.values(), self.preferences):
@@ -69,6 +77,7 @@ class Window(QMainWindow):
             return
         self.stack.setCurrentWidget(screen)
         self.title.setText(getattr(screen, 'title', T.APP))
+        self.ai.setVisible(getattr(screen, 'ai', False))
         self.back.setVisible(screen != self.home)
         self.settings_button.setVisible(screen != self.preferences)
         if self.current_tool():
