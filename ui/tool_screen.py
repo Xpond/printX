@@ -140,7 +140,10 @@ class ToolScreen(QWidget):
     def start(self):
         if not self.model.paths or self.jobs.busy or not self.confirm():
             return
-        options = dict(self.job_options(), tool=self.tool, output_folder=self.settings.value('output_folder', ''))
+        self.launch(list(self.model.paths), dict(self.job_options(), tool=self.tool))
+
+    def launch(self, paths, options):
+        options = dict(options, output_folder=self.settings.value('output_folder', ''))
         self.messages.clear()
         self.messages.hide()
         self.outputs.clear()
@@ -149,14 +152,14 @@ class ToolScreen(QWidget):
         self.options.setEnabled(False)
         self.run.setEnabled(False)
         self.run.setText(self.words['running'])
-        self.progress.setRange(0, len(self.model.paths) * 100)  # Tools may report fractions of a file.
+        self.progress.setRange(0, len(paths) * 100)  # Tools may report fractions of a file.
         self.progress.setValue(0)
         self.progress.show()
         self.cancel.setEnabled(True)
         self.cancel.setText(T.CANCEL)
         self.cancel.show()
         self.set_status(self.words['running'])
-        self.jobs.start(list(self.model.paths), options)
+        self.jobs.start(paths, options)
 
     def cancel_job(self):
         self.cancel.setEnabled(False)

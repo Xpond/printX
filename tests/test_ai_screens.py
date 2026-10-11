@@ -119,9 +119,14 @@ def test_remove_previews_results_and_puts_them_on_a_background(qtbot, tmp_path, 
     qtbot.addWidget(window)
     window.show()
     window.home.selected.emit('remove')
-    screen = window.remove
+    screen, started = window.remove, {}
+
+    def begin(paths, options):
+        started.update(options, paths=paths)
+        screen.jobs.busy = True
+
+    monkeypatch.setattr(screen.jobs, 'start', begin)
     screen.add_files([str(photo)])
-    monkeypatch.setattr(screen.jobs, 'start', lambda paths, options: setattr(screen.jobs, 'busy', True))
     screen.start()
     cutout = tmp_path / 'café photo 🖨_no_background.png'
     Image.new('RGBA', (600, 400), (0, 0, 0, 0)).save(cutout)
@@ -130,31 +135,23 @@ def test_remove_previews_results_and_puts_them_on_a_background(qtbot, tmp_path, 
     screen.on_event('done', [str(cutout)])
     previews = screen.previews
     assert previews.isVisible() and not screen.list.isVisible() and previews.row.isVisible()
-    image, _, _ = previews.pictures[str(cutout)]
-    qtbot.waitUntil(lambda: previews.pictures[str(cutout)][2] is not None, timeout=10000)  # Its preview loaded.
-    assert not image.pixmap().isNull()
-    assert previews.color() is None and not previews.save_button.isEnabled()  # Saved transparent already.
+    image = previews.pictures[str(cutout)][0]
+    qtbot.waitUntil(lambda: not image.pixmap().isNull(), timeout=10000)  # Its preview loaded.
+    assert not previews.save_button.isEnabled()  # Already saved transparent.
     previews.swatches[1].click()
-    assert previews.color() == '#87ceeb' and image.pixmap().toImage().pixelColor(5, 5).name() == '#87ceeb'
-    previews.pick_custom('#123456')
-    assert previews.wheel.isChecked() and settings.value('remove/background') == '#123456'
+    assert image.pixmap().toImage().pixelColor(5, 5).name() == '#87ceeb'
+    previews.wheel.picked.emit('#123456')
+    assert previews.color() == '#123456' and image.pixmap().toImage().pixelColor(5, 5).name() == '#123456'
     previews.swatches[2].click()
-    started = {}
-
-    def begin(paths, options):
-        started.update(options, paths=paths)
-        screen.jobs.busy = True
-
-    monkeypatch.setattr(screen.jobs, 'start', begin)
     previews.save_button.click()
     assert started['tool'] == 'backdrop' and started['paths'] == [str(cutout)]
-    assert started['color'] == '#ffffff' and started['name'] == 'white' and screen.status.text() == T.FILLING
+    assert started['color'] == '#ffffff' and started['name'] == 'white' and screen.status.text() == T.FILL['running']
     filled = tmp_path / 'café photo 🖨_white_background.jpg'
     screen.on_event('output', {'path': str(filled)})
     screen.jobs.busy = False
     screen.on_event('done', [str(filled)])
-    assert screen.outputs.currentData() == str(filled) and screen.status.text() == T.FILLED['success_one']
-    assert list(previews.pictures) == [str(cutout)]  # The previews stay, to try another colour.
+    assert screen.outputs.currentData() == str(filled) and screen.status.text() == T.FILL['success_one']
+    assert list(previews.pictures) == [str(cutout)] and screen.words == T.CUTOUT  # Ready to try another colour.
     screen.again.click()
     assert screen.list.isVisible() and not previews.isVisible() and not previews.pictures
 

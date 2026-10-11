@@ -1,5 +1,5 @@
 """Put cut-outs on a solid background: the finished picture, at full size, ready to print."""
-from core.files import JobError, check_cancel, each_file, output_directory, publish, staging
+from core.files import check_cancel, each_file, output_directory, publish, staging
 from core.images import pillow_open
 from core.upscale import SAVE
 
@@ -12,8 +12,6 @@ def backdrop(paths, options, progress, cancel):
         with pillow_open(path) as source:
             keep = {key: source.info[key] for key in ('dpi', 'icc_profile') if source.info.get(key)}
             cutout = source.convert('RGBA')
-        if cutout.getchannel('A').getextrema()[0] == 255:
-            raise JobError('not_cutout')
         result = Image.new('RGB', cutout.size, options['color'])
         result.paste(cutout, mask=cutout.getchannel('A'))
         del cutout

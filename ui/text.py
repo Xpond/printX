@@ -127,11 +127,10 @@ TARGET_HINT = 'Describe what to remove, e.g. the watermark in the corner or the 
 BACKGROUND = 'Background'
 BACKGROUNDS = [(None, 'Transparent', ''), ('#87ceeb', 'Sky blue', 'sky_blue'), ('#ffffff', 'White', 'white')]
 OTHER_COLOR = 'Pick another colour'
-TRANSPARENT_NOTE = 'Saved as a transparent PNG. Pick a colour to preview it.'
-BACKGROUND_NOTE = 'Saves a full-size JPG copy on this colour.'
 SAVE_BACKGROUND = 'Save with background'
-FILLING = 'Adding the background…'
-FILLED = {'success': 'Saved {count} images with the new background', 'success_one': 'Saved 1 image with the new background'}
+FILL = {**CUTOUT, 'running': 'Adding the background…', 'progress': 'Adding the background · {index} of {total}',
+        'finishing': 'Saving…', 'success': 'Saved {count} images with the new background',
+        'success_one': 'Saved 1 image with the new background'}
 NEEDS_KEY = 'Add an OpenRouter API key in Settings to use AI tools.'
 CANCEL = 'Cancel'
 CANCELLING = 'Cancelling…'
@@ -171,7 +170,6 @@ ERRORS = {
     'ai_busy': 'The AI service is busy. Wait a minute and try again.',
     'ai_model': 'OpenRouter has no model with this name. Check the model names in Settings.',
     'ai_failed': 'The AI could not edit this image. Try again, or describe it differently.',
-    'not_cutout': 'This image has no transparent background to fill.',
     'ai_nothing': 'The AI found nothing to remove. Describe it differently and try again.',
 }
 OUTPUT_FOLDER = 'Output folder'
