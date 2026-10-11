@@ -52,6 +52,7 @@ def apply_theme(app, dark=None):
         QWidget#chatbody {{ background: {surface}; }}
         QLabel#mine {{ background: {line}; padding: 6px 10px; }}
         QLabel#version {{ border: 2px solid transparent; }}
+        QFrame#popup {{ background: {surface}; border: 1px solid {line}; }}
         QLabel#drop {{ border: 2px dashed {line}; padding: 12px; }}
         QLabel#version[current="true"] {{ border-color: {yellow}; }}
         QComboBox, QLineEdit, QAbstractSpinBox, QPlainTextEdit {{ background: {surface}; border: 1px solid {line}; padding: 4px 8px; min-height: 22px; }}

@@ -101,7 +101,7 @@ class Thumbnails(QObject):
         self.timer.setInterval(40)
         self.timer.timeout.connect(self.poll)
 
-    def request(self, path):
+    def request(self, path, size=None):
         if path in self.pending:
             return
         if self.process is None:
@@ -111,7 +111,7 @@ class Thumbnails(QObject):
             self.process.start()
             self.timer.start()
         self.pending.add(path)
-        self.commands.put((path, self.size))
+        self.commands.put((path, size or self.size))
 
     def poll(self):
         try:

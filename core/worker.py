@@ -25,6 +25,8 @@ def job_loop(commands, events, answers, cancel):
                 from core.pdf_tools import split_pdf as job
             elif options.get('tool') == 'remove':
                 from core.remove import remove as job
+            elif options.get('tool') == 'backdrop':
+                from core.backdrop import backdrop as job
             elif options.get('tool') == 'enhance':
                 from core.enhance import enhance as job
             else:
