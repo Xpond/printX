@@ -1,4 +1,6 @@
-**New in 0.4.3:** Remove background shows each result as soon as it is ready, in place of the photo row. Cut-outs can be previewed on sky blue, white or any colour from a small colour wheel, and **Save with background** saves a full-size JPG of each on that colour, for one photo or a whole batch.
+**New in 0.4.4:** while results are showing, Remove background's description box is back to four lines and the previews take the rest of the height.
+
+**0.4.3:** Remove background shows each result as soon as it is ready, in place of the photo row. Cut-outs can be previewed on sky blue, white or any colour from a small colour wheel, and **Save with background** saves a full-size JPG of each on that colour, for one photo or a whole batch.
 
 **0.4.2:** the key box shows what you paste (once saved, it is cleared and never shown again), so a key pasted twice or only partly is easy to spot. Settings asks OpenRouter whether the saved key works, each time it opens and after saving, and shows the answer beside the Save button with OpenRouter's reason when it refuses the key. When an AI tool fails, its message now includes OpenRouter's own words. Spaces and line breaks pasted with a key are removed.
 
