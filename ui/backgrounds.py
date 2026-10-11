@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (QAbstractButton, QButtonGroup, QHBoxLayout, QLabe
 from ui import text as T
 from ui.widgets import button
 
-SIDE = 300  # Largest side of a preview.
+SIDE = 300  # Smallest side of a preview; they grow to fill the height they get.
 
 
 def checkers():
@@ -84,7 +84,7 @@ class Backgrounds(QWidget):
     def __init__(self):
         super().__init__()
         self.strip = QScrollArea()
-        self.strip.setFixedHeight(SIDE + 24 + self.strip.horizontalScrollBar().sizeHint().height())
+        self.strip.setMinimumHeight(SIDE + 24 + self.strip.horizontalScrollBar().sizeHint().height())
         self.strip.setWidgetResizable(True)
         self.strip.setWidget(QWidget())
         self.cards = QHBoxLayout(self.strip.widget())
@@ -132,15 +132,21 @@ class Backgrounds(QWidget):
         """A result's preview arrived: the thumbnail process's (data, kind, pixel size)."""
         picture = QPixmap()
         if path in self.pictures and picture.loadFromData(result[0]):
-            self.pictures[path] = self.pictures[path][0], picture.scaled(
-                SIDE, SIDE, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            self.pictures[path] = self.pictures[path][0], picture
             self.paint()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.paint()
 
     def paint(self):
         color = self.color() if self.row.isVisibleTo(self) else '#ffffff'
         self.save_button.setEnabled(color not in (None, 'wheel'))
+        side = max(SIDE, self.strip.viewport().height() - 24)
         for image, picture in self.pictures.values():
             if picture:
+                picture = picture.scaled(side, side, Qt.AspectRatioMode.KeepAspectRatio,
+                                         Qt.TransformationMode.SmoothTransformation)
                 shown = QPixmap(picture.size())
                 painter = QPainter(shown)
                 painter.fillRect(shown.rect(), QColor(color) if color not in (None, 'wheel') else checkers())

@@ -33,7 +33,7 @@ class Remove(AiTool):
         self.previews.hide()
         self.previews.save.connect(self.fill)
         self.inputs.layout().addWidget(self.previews)
-        self.model.thumbnails.size = SIDE
+        self.model.thumbnails.size = 2 * SIDE  # Previews grow with the window.
         self.model.thumbnails.ready.connect(self.previews.fill)
         self.model.changed.connect(lambda: self.show_results(False))  # Adding or removing photos shows them again.
         self.refresh()
@@ -62,6 +62,10 @@ class Remove(AiTool):
         for widget in (self.list, self.select_all, self.remove_button):
             widget.setVisible(not visible)
         self.previews.setVisible(visible)
+        self.layout.setStretchFactor(self.inputs, int(visible))  # Results get the spare height, not the description.
+        self.layout.setStretchFactor(self.bar, int(not visible))
+        for box in (self.keep, self.target):
+            box.setMaximumHeight(4 * box.fontMetrics().lineSpacing() + 16 if visible else 16777215)
 
     def start(self):
         super().start()
