@@ -161,3 +161,23 @@ def test_key_check_gives_openrouters_reason(monkeypatch):
     monkeypatch.setattr(urllib.request, 'urlopen', offline)
     assert key_problem('sk-good') is None
 
+
+
+def test_backdrop_puts_cutouts_on_a_full_size_colour(tmp_path):
+    from core.backdrop import backdrop
+    cutout = Image.new('RGBA', (800, 600), (0, 0, 0, 0))
+    ImageDraw.Draw(cutout).rectangle((300, 200, 500, 400), fill='#d02020')
+    path = tmp_path / 'product 🖨_no_background.png'
+    cutout.save(path, dpi=(300, 300))
+    solid = tmp_path / 'solid.png'
+    Image.new('RGBA', (10, 10), 'red').save(solid)
+    events = []
+    options = {'token': uuid.uuid4().hex, 'color': '#87ceeb', 'name': 'sky_blue'}
+    output, = backdrop([str(path), str(solid)], options, lambda *event: events.append(event), threading.Event())
+    with Image.open(output) as result:
+        assert Path(output).name == 'product 🖨_sky_blue_background.jpg'
+        assert result.mode == 'RGB' and result.size == (800, 600)
+        assert result.info['dpi'] == pytest.approx((300, 300), abs=.01)
+        assert all(abs(a - b) < 6 for a, b in zip(result.getpixel((50, 50)), (0x87, 0xce, 0xeb)))
+        assert all(abs(a - b) < 6 for a, b in zip(result.getpixel((400, 300)), (0xd0, 0x20, 0x20)))
+    assert [payload['code'] for kind, payload in events if kind == 'skipped'] == ['not_cutout']  # Nothing to fill.
