@@ -12,6 +12,7 @@
 ## Remove background
 
 1. Drop your photos: they line up in one row, and the description box below takes most of the screen. Leave **Remove: Background** and press **Remove background from N images**. Each photo takes about 20 seconds while the bar keeps moving. Results are saved next to the originals as `name_no_background.png`, the same pixel size as the originals (**Properties → Details**). Put one on a coloured slide in PowerPoint or Word: only the subject shows, with clean edges.
+1. Each result appears in place of the photo row, on grey and white squares (transparent). Click the sky blue and white circles: every preview changes at once. Click the colour wheel circle and click or drag on the wheel that opens: the previews follow. Press **Save with background**: each photo is saved as `name_sky_blue_background.jpg` (or `_white_`, or the colour's code), full size, and opens in any app on that colour. **Add files** or **Do another** brings the photo row back.
 2. For the group photo, describe who to keep in the box, such as `the woman on the left`, and press **Enter** to run it again (**Shift+Enter** starts a new line). The new file ends in `(2)` and keeps only that person.
 3. Choose **Something else**: the button greys out until you describe it. Type `the watermark` (or `the date stamp`, `the text`) for the photo that has one and run it. `name_edited.jpg` has it removed; the rest of the photo is unchanged and as sharp as before.
 4. Start a job and press **Cancel**: it stops at once and leaves no file.
